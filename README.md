@@ -26,6 +26,6 @@
 
      Demo of VR video player for cubemap video format. Layout of supported cubemap list as below:
    
-    right-left-top
+   right-left-top
   
-    bottom-back-front
+   bottom-back-front
