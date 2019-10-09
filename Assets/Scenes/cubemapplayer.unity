@@ -279,7 +279,7 @@ VideoPlayer:
   - {fileID: 1647170030}
   m_DirectAudioVolumes:
   - 1
-  m_Url: "file://E:/PICO/\u89C6\u9891\u548C\u56FE\u7247/Cubemap.mp4"
+  m_Url: 
   m_EnabledAudioTracks: 01
   m_DirectAudioMutes: 00
   m_ControlledAudioTrackCount: 1
@@ -413,7 +413,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _material: {fileID: 2100000, guid: 46b25fd58c3b1e440bb717773223b746, type: 2}
-  _videoPlayer: {fileID: 0}
+  _videoPlayer: {fileID: 1647170028}
   expansion_coeff: 1.01
   _layout: 0
   _texture: {fileID: 0}
