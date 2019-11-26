@@ -214,7 +214,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   layerIndex: 15
-  layerType: 0
+  overlayType: 0
+  imageType: 0
   layerTransform: {fileID: 0}
   layerTextures:
   - {fileID: 2800000, guid: b04b83f4c6f878c4e97b418ce4238192, type: 3}
@@ -322,7 +323,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   layerIndex: 0
-  layerType: 2
+  overlayType: 0
+  imageType: 2
   layerTransform: {fileID: 0}
   layerTextures:
   - {fileID: 2800000, guid: 39ae30eb07b771b43a50afda13c4edb1, type: 3}

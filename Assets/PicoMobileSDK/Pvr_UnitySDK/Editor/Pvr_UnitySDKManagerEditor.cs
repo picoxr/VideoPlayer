@@ -11,7 +11,6 @@ public class Pvr_UnitySDKManagerEditor : Editor
     static int QulityRtMass = 0;
     public delegate void Change(int Msaa);
     public static event Change MSAAChange;
-
     public override void OnInspectorGUI()
     {
         GUI.changed = false;
@@ -52,16 +51,38 @@ public class Pvr_UnitySDKManagerEditor : Editor
 
         GUILayout.Space(10);
         EditorGUILayout.LabelField("Pose Settings", firstLevelStyle);
-        manager.HeadDofNum = (HeadDofNum)EditorGUILayout.EnumPopup("Head Pose", manager.HeadDofNum);
-        if (manager.HeadDofNum == HeadDofNum.ThreeDof)
+        manager.TrackingOrigin = (TrackingOrigin)EditorGUILayout.EnumPopup("Tracking Origin", manager.TrackingOrigin);
+        manager.Rotfoldout = EditorGUILayout.Foldout(manager.Rotfoldout, "Only Rotation Tracking");
+        if (manager.Rotfoldout)
         {
-            manager.PVRNeck = EditorGUILayout.Toggle("Enable Neck Model", manager.PVRNeck);
+            manager.HmdOnlyrot = EditorGUILayout.Toggle("  Only HMD Rotation Tracking", manager.HmdOnlyrot);
+            if (manager.HmdOnlyrot)
+            {
+                manager.PVRNeck = EditorGUILayout.Toggle("    Enable Neck Model", manager.PVRNeck);
+                if (manager.PVRNeck)
+                {
+                    manager.UseCustomNeckPara = EditorGUILayout.Toggle("Use Custom Neck Parameters", manager.UseCustomNeckPara);
+                    if (manager.UseCustomNeckPara)
+                    {
+                        manager.neckOffset = EditorGUILayout.Vector3Field("Neck Offset", manager.neckOffset);
+                    }
+                }
+            }
+            else
+            {
+                manager.PVRNeck = false;
+            }
+            manager.ControllerOnlyrot =
+                EditorGUILayout.Toggle("  Only Controller Rotation Tracking", manager.ControllerOnlyrot);
         }
         else
-            manager.PVRNeck = false;
-       manager.HandDofNum = (HandDofNum)EditorGUILayout.EnumPopup("Hand Pose", manager.HandDofNum);
+        {
+            manager.HmdOnlyrot = false;
+            manager.ControllerOnlyrot = false;
+        }
+        
         manager.MovingRatios = EditorGUILayout.FloatField("Position ScaleFactor", manager.MovingRatios);
-        manager.SixDofRecenter = EditorGUILayout.Toggle("Enable 6Dof Position Reset", manager.SixDofRecenter);
+        manager.SixDofPosReset = EditorGUILayout.Toggle("Enable 6Dof Position Reset", manager.SixDofPosReset);
 
         manager.DefaultRange = EditorGUILayout.Toggle("Use Default Safe Radius", manager.DefaultRange);
         if (!manager.DefaultRange)
@@ -80,6 +101,7 @@ public class Pvr_UnitySDKManagerEditor : Editor
             manager.CustomFPS = EditorGUILayout.IntField("    FPS", manager.CustomFPS);
         }
         manager.Monoscopic = EditorGUILayout.Toggle("Use Monoscopic", manager.Monoscopic);
+        manager.Copyrightprotection = EditorGUILayout.Toggle("Copyright protection", manager.Copyrightprotection);
         if (GUI.changed)
         {
             QulityRtMass = (int)Pvr_UnitySDKManager.SDK.RtAntiAlising;
@@ -91,7 +113,7 @@ public class Pvr_UnitySDKManagerEditor : Editor
             {
                 MSAAChange(QulityRtMass);
             }
-            var headDof = (int)manager.HeadDofNum;
+            var headDof = Pvr_UnitySDKManager.SDK.HmdOnlyrot ? 0 : 1;
             if (HeadDofChangedEvent != null)
             {
                 if (headDof == 0)

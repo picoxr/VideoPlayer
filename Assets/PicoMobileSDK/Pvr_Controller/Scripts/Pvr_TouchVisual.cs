@@ -55,7 +55,7 @@ public class Pvr_TouchVisual : MonoBehaviour {
 
                 }
                 break;
-            case ControllerDevice.Goblin2:
+            case ControllerDevice.G2:
             {
                 if (Controller.UPvr_IsTouching(0))
                 {

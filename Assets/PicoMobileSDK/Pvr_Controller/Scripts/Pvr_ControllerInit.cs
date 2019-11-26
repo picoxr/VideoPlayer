@@ -18,6 +18,8 @@ public class Pvr_ControllerInit : MonoBehaviour {
     [SerializeField]
     private GameObject controller3;
     [SerializeField]
+    private GameObject controller4;
+    [SerializeField]
     private Material generalMat;
     [SerializeField]
     private GameObject controllerpower;
@@ -167,9 +169,10 @@ public class Pvr_ControllerInit : MonoBehaviour {
     {
         var state = Convert.ToBoolean(Convert.ToInt16(data.Substring(4, 1)));
         var id = Convert.ToInt16(data.Substring(0, 1));
+        var type = Controller.UPvr_GetDeviceType();
         if (state)
         {
-            controllerType = 2;
+            controllerType = type;
             switch (id)
             {
                 case 0:
@@ -302,7 +305,7 @@ public class Pvr_ControllerInit : MonoBehaviour {
                     break;
                 case 3:
                     {
-                        controllerVisual.currentDevice = ControllerDevice.Goblin2;
+                        controllerVisual.currentDevice = ControllerDevice.G2;
                     }
                     break;
                 default:
@@ -351,24 +354,35 @@ public class Pvr_ControllerInit : MonoBehaviour {
                 controller1.SetActive(true);
                 controller2.SetActive(false);
                 controller3.SetActive(false);
+                controller4.SetActive(false);
                 loadModelSuccess = true;
                 break;
             case 2:
                 controller1.SetActive(false);
                 controller2.SetActive(true);
                 controller3.SetActive(false);
+                controller4.SetActive(false);
                 loadModelSuccess = true;
                 break;
             case 3:
                 controller1.SetActive(false);
                 controller2.SetActive(false);
                 controller3.SetActive(true);
+                controller4.SetActive(false);
+                loadModelSuccess = true;
+                break;
+            case 4:
+                controller1.SetActive(false);
+                controller2.SetActive(false);
+                controller3.SetActive(false);
+                controller4.SetActive(true);
                 loadModelSuccess = true;
                 break;
             default:
                 controller1.SetActive(false);
                 controller2.SetActive(false);
                 controller3.SetActive(false);
+                controller4.SetActive(false);
                 loadModelSuccess = false;
                 break;
         }

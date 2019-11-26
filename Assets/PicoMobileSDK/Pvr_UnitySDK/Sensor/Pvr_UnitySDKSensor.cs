@@ -82,9 +82,9 @@ public class Pvr_UnitySDKSensor
             Pvr_UnitySDKAPI.Render.UPvr_GetIntConfig(enumindex, ref ability6dof);
             if (ability6dof == 1)
             {
-                if (Pvr_UnitySDKAPI.Sensor.UPvr_Enable6DofModule(Pvr_UnitySDKManager.SDK.HeadDofNum == HeadDofNum.SixDof) == 0)
+                if (Pvr_UnitySDKAPI.Sensor.UPvr_Enable6DofModule(!Pvr_UnitySDKManager.SDK.HmdOnlyrot) == 0)
                 {
-                    if (Pvr_UnitySDKManager.SDK.HeadDofNum == HeadDofNum.SixDof)
+                    if (!Pvr_UnitySDKManager.SDK.HmdOnlyrot)
                     {
                         enable = true;
                         Pvr_UnitySDKManager.SDK.PVRNeck = false;
@@ -181,6 +181,10 @@ public class Pvr_UnitySDKSensor
         bool enable = false;
         try
         {
+            if (!Pvr_UnitySDKManager.SDK.SixDofPosReset)
+            {
+                resetPos = 0;
+            }
             if (Pvr_UnitySDKAPI.Sensor.UPvr_OptionalResetSensor((int)sensorIndex, resetRot, resetPos) == 0)
             {
                 enable = true;
@@ -241,6 +245,13 @@ public class Pvr_UnitySDKSensor
                     {                      
                         UnityPosition = new Vector3(px * Pvr_UnitySDKManager.SDK.MovingRatios, py * Pvr_UnitySDKManager.SDK.MovingRatios, -pz * Pvr_UnitySDKManager.SDK.MovingRatios);
                     }
+
+                    if (Pvr_UnitySDKManager.SDK.TrackingOrigin == TrackingOrigin.FloorLevel)
+                    {
+                        float posY = UnityPosition.y + Mathf.Abs(Pvr_UnitySDKAPI.BoundarySystem.UPvr_GetFloorHeight());
+                        UnityPosition.Set(UnityPosition.x, posY, UnityPosition.z);
+                    }
+
                     PLOG.D("PvrLog 6DoFHead" + "Rotation" + x + y + -z + -w + "Position" + px + py + -pz + "eulerAngles" + UnityQuaternion.eulerAngles);
                 }
                 if (returns == -1)

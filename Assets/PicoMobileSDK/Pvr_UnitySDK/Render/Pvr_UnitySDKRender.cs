@@ -32,6 +32,7 @@ public class Pvr_UnitySDKRender
     public static AndroidJavaClass javaSysActivityClass;  
     public static AndroidJavaClass javaserviceClass;
 	public static AndroidJavaClass javaVrActivityLongReceiver;
+    public static AndroidJavaClass javaVrActivityClientClass;
 #endif
 
     private bool canConnecttoActivity = false;
@@ -176,6 +177,7 @@ public class Pvr_UnitySDKRender
             javaserviceClass = new AndroidJavaClass("com.picovr.picovrlib.hummingbirdclient.UnityClient");
 			javaVrActivityLongReceiver = new UnityEngine.AndroidJavaClass("com.psmart.vrlib.HomeKeyReceiver");
             javaSysActivityClass = new UnityEngine.AndroidJavaClass("com.psmart.aosoperation.SysActivity");
+            javaVrActivityClientClass = new UnityEngine.AndroidJavaClass("com.psmart.vrlib.PvrClient");
 			Pvr_UnitySDKAPI.System.Pvr_SetInitActivity(activity.GetRawObject(), javaVrActivityClass.GetRawClass());
             model = javaVrActivityClass.CallStatic<string>("Pvr_GetBuildModel");
 /*

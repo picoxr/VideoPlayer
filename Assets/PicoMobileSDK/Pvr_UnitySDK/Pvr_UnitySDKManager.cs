@@ -104,41 +104,46 @@ public class Pvr_UnitySDKManager : MonoBehaviour
 
     [HideInInspector]
     public float[] headData = new float[7] { 0, 0, 0, 0, 0, 0, 0 };
-
+    
     [SerializeField]
-    private HeadDofNum _headDofNum = HeadDofNum.SixDof;
-    public HeadDofNum HeadDofNum
+    private bool rotfoldout = false;
+
+    public bool Rotfoldout
     {
-        get
-        {
-            return _headDofNum;
-        }
+        get { return rotfoldout; }
         set
         {
-            if (value != _headDofNum)
-            {
-                _headDofNum = value;
+            if (value != rotfoldout)
+                rotfoldout = value;
+        }
+    }
 
-            }
+    [SerializeField]
+    private bool hmdOnlyrot =false;
+
+    public bool HmdOnlyrot
+    {
+        get { return hmdOnlyrot; }
+        set
+        {
+            if (value != hmdOnlyrot)
+                hmdOnlyrot = value;
         }
     }
     [SerializeField]
-    private HandDofNum _handDofNum = HandDofNum.SixDof;
-    public HandDofNum HandDofNum
+    private bool controllerOnlyrot = false;
+
+    public bool ControllerOnlyrot
     {
-        get
-        {
-            return _handDofNum;
-        }
+        get { return controllerOnlyrot; }
         set
         {
-            if (value != _handDofNum)
-            {
-                _handDofNum = value;
-
-            }
+            if (value != controllerOnlyrot)
+                controllerOnlyrot = value;
         }
     }
+
+    public TrackingOrigin TrackingOrigin = TrackingOrigin.EyeLevel;
 
     [SerializeField]
     private RenderTextureAntiAliasing rtAntiAlising = RenderTextureAntiAliasing.X_2;
@@ -320,18 +325,18 @@ public class Pvr_UnitySDKManager : MonoBehaviour
     }
     //6dof recenter
     [SerializeField]
-    private bool sixDofRecenter;
-    public bool SixDofRecenter
+    private bool sixDofPosReset;
+    public bool SixDofPosReset
     {
         get
         {
-            return sixDofRecenter;
+            return sixDofPosReset;
         }
         set
         {
-            if (value != sixDofRecenter)
+            if (value != sixDofPosReset)
             {
-                sixDofRecenter = value;
+                sixDofPosReset = value;
             }
         }
     }
@@ -461,7 +466,8 @@ public class Pvr_UnitySDKManager : MonoBehaviour
 
     [HideInInspector]
     public bool PVRNeck = true;
-
+    [HideInInspector]
+    public bool UseCustomNeckPara = false;
 
     // life
     [HideInInspector]
@@ -475,11 +481,20 @@ public class Pvr_UnitySDKManager : MonoBehaviour
     [HideInInspector]
     public GameObject resetPanel;
     private GameObject safePanel1;
-    private GameObject safePanel2;
     public bool isHasController = false;
     public GameObject ViewerToast;
     public Pvr_UnitySDKConfigProfile pvr_UnitySDKConfig;
 
+    private GameObject calltoast;
+    private GameObject msgtoast;
+    private GameObject lowhmdBatterytoast;
+    private GameObject lowphoneBatterytoast;
+    private GameObject LowPhoneHealthtoast;
+    private GameObject LowcontrollerBatterytoast;
+    private bool lowControllerpowerstate = false;
+    private float controllerpowershowtime = 0f;
+    private bool UseToast = true;
+    private int iPhoneHMDModeEnabled;
     [SerializeField]
     private bool isViewerLogicFlow = true;
     public bool IsViewerLogicFlow
@@ -512,7 +527,24 @@ public class Pvr_UnitySDKManager : MonoBehaviour
         }
     }
 
+    [SerializeField]
+    private bool copyrightprotection = false;
+
+    [HideInInspector]
+    public bool Copyrightprotection
+    {
+        get { return copyrightprotection; }
+        set
+        {
+            if (value != copyrightprotection)
+            {
+                copyrightprotection = value;
+            }
+        }
+    }
+
     private bool mIsAndroid7 = false;
+    public static Func<bool> eventEnterVRMode;
     #endregion
 
     /************************************ Public Interfaces  *********************************/
@@ -669,6 +701,285 @@ public class Pvr_UnitySDKManager : MonoBehaviour
         return true;
     }
 
+    public void smsReceivedCallback(string msg)
+    {
+        PLOG.I("PvrLog MSG" + msg);
+
+        var Jdmsg = LitJson.JsonMapper.ToObject(msg);
+
+        string name = "";
+        if (msg.Contains("messageSender"))
+        {
+            name = (string)Jdmsg["messageSender"];
+        }
+
+        string number = "";
+        if (msg.Contains("messageAdr"))
+        {
+            number = (string)Jdmsg["messageAdr"];
+            if (number.Substring(0, 3) == "+82")
+            {
+                number = "0" + number.Remove(0, 3);
+                number = TransformNumber(number);
+            }
+            else
+            {
+                if (number.Substring(0, 1) != "+")
+                {
+                    number = TransformNumber(number);
+                }
+            }
+        }
+        string body = "";
+        if (msg.Contains("messageBody"))
+        {
+            body = (string)Jdmsg["messageBody"];
+        }
+        //DateTime dt = DateTime.Parse("1970-01-01 00:00:00").AddMilliseconds(Convert.ToInt64((Int64)Jdmsg["messageTime"]));
+        //string time = dt.ToString("yyyy-MM-dd HH:mm:ss");
+        if (UseToast)
+        {
+            msgtoast.transform.Find("number").GetComponent<Text>().text = number;
+            msgtoast.transform.Find("name").GetComponent<Text>().text = name;
+            if (name.Length == 0)
+            {
+                msgtoast.transform.Find("number").transform.localPosition = new Vector3(0, 0, 0);
+            }
+            else
+            {
+                msgtoast.transform.Find("number").transform.localPosition = new Vector3(60, 0, 0);
+            }
+
+            StartCoroutine(ToastManager(2, true, 0f));
+            StartCoroutine(ToastManager(2, false, 5.0f));
+        }
+    }
+
+    public void phoneStateCallback(string state)
+    {
+        PLOG.I("PvrLog phone" + state);
+
+        var Jdstate = LitJson.JsonMapper.ToObject(state);
+
+        string number = "";
+        if (state.Contains("phoneNumber"))
+        {
+            number = (string)Jdstate["phoneNumber"];
+            
+            if (number.Substring(0, 3) == "+82")
+            {
+                number = "0" + number.Remove(0, 3);
+                number =TransformNumber(number);
+            }
+            else
+            {
+                if (number.Substring(0, 1) != "+")
+                {
+                    number = TransformNumber(number);
+                }
+            }
+        }
+        string name = "";
+        if (state.Contains("contactName"))
+        {
+           name = (string)Jdstate["contactName"];
+        }
+        
+        if (UseToast)
+        {
+            calltoast.transform.Find("number").GetComponent<Text>().text = number;
+            calltoast.transform.Find("name").GetComponent<Text>().text = name;
+            if (name.Length == 0)
+            {
+                calltoast.transform.Find("number").transform.localPosition = new Vector3(0, 0, 0);
+            }
+            else
+            {
+                calltoast.transform.Find("number").transform.localPosition = new Vector3(60, 0, 0);
+            }
+            
+            StartCoroutine(ToastManager(1, true, 0f));
+            StartCoroutine(ToastManager(1, false, 5.0f));
+        }
+    }
+
+    public void phoneBatteryStateCallback(string state)
+    {
+        PLOG.I("PvrLog phoneBatteryState" + state);
+
+        var Jdstate = LitJson.JsonMapper.ToObject(state);
+
+        string level = "";
+        if (state.Contains("phoneBatteryLevel"))
+        {
+            level = (string)Jdstate["phoneBatteryLevel"];
+        }
+        string health = "";
+        if (state.Contains("phoneBatteryHealth"))
+        {
+            health = (string)Jdstate["phoneBatteryHealth"];
+        }
+        
+        if (UseToast)
+        {
+            if (Convert.ToInt16(level) <= 5)
+            {
+                if (lowhmdBatterytoast.activeSelf == false)
+                {
+                    StartCoroutine(ToastManager(4, true, 0f));
+                    StartCoroutine(ToastManager(4, false, 3.0f));
+                }
+                else
+                {
+                    StartCoroutine(ToastManager(4, true, 5.0f));
+                    StartCoroutine(ToastManager(4, false, 8.0f));
+                }
+                
+            }
+            if (Convert.ToInt16(health) == 3)
+            {
+                StartCoroutine(ToastManager(5, true, 0f));
+                StartCoroutine(ToastManager(5, false, 5.0f));
+            }
+        }
+    }
+    public void hmdLowBatteryCallback(string level)
+    {
+        PLOG.I("PvrLog hmdLowBatteryCallback" + level);
+
+        if (UseToast)
+        {
+            if (lowphoneBatterytoast.activeSelf == false)
+            {
+                StartCoroutine(ToastManager(3, true, 0f));
+                StartCoroutine(ToastManager(3, false, 3.0f));
+            }
+            else
+            {
+                StartCoroutine(ToastManager(3, true, 5.0f));
+                StartCoroutine(ToastManager(3, false, 8.0f));
+            }
+            
+        }
+    }
+    private string TransformNumber(string number)
+    {
+        if (number.Length == 11)
+        {
+            //0xy-1234-1234
+            //x = 3,4,5,6
+            //y = 1,2,3,4,5
+
+            //01x-1234-1234
+            //x=0,1,6,7,8...
+            var part1 = number.Substring(0, 3);
+            var part2 = number.Substring(3, 4);
+            var part3 = number.Substring(7, 4);
+
+            number = part1 + "-" + part2 + "-" + part3;
+        }
+        else if (number.Length == 10)
+        {
+            //01x-123-1234
+            if (number.Substring(1, 1) == "1")
+            {
+                var part1 = number.Substring(0, 3);
+                var part2 = number.Substring(3, 3);
+                var part3 = number.Substring(6, 4);
+
+                number = part1 + "-" + part2 + "-" + part3;
+            }
+            //02-1234-1234
+            else
+            {
+                var part1 = number.Substring(0, 2);
+                var part2 = number.Substring(2, 4);
+                var part3 = number.Substring(6, 4);
+
+                number = part1 + "-" + part2 + "-" + part3;
+            }
+        }
+        //02-123-1234
+        else if (number.Length == 9)
+        {
+            if (number.Substring(1, 1) == "2")
+            {
+                var part1 = number.Substring(0, 2);
+                var part2 = number.Substring(2, 3);
+                var part3 = number.Substring(5, 4);
+
+                number = part1 + "-" + part2 + "-" + part3;
+            }
+            else
+            {
+                number = "+82" + number.Remove(0, 1);
+            }
+        }
+        return number;
+    }
+    //Head reset is complete
+    public void onHmdOrientationReseted()
+    {
+
+    }
+
+    private IEnumerator ToastManager(int type,bool state,float time)
+    {
+        yield return new WaitForSeconds(time);
+
+        switch (type)
+        {
+            //call toast
+            case 1:
+                {
+                    calltoast.SetActive(state);
+                    break;
+                }
+            //msg toast
+            case 2:
+                {
+                    msgtoast.SetActive(state);
+                    break;
+                }
+            //low hmd battery toast
+            case 3:
+                {
+                    lowhmdBatterytoast.SetActive(state);
+                    break;
+                }
+            //low phone battery toast
+            case 4:
+                {
+                    lowphoneBatterytoast.SetActive(state);
+                    break;
+                }
+            //low phone health toast
+            case 5:
+                {
+                    LowPhoneHealthtoast.SetActive(state);
+                    break;
+                }
+            //low controller battery toast
+            case 6:
+                {
+                    LowcontrollerBatterytoast.SetActive(state);
+                    break;
+                }
+        }
+
+    }
+
+    private void CheckControllerStateForG2(string state)
+    {
+        if (iPhoneHMDModeEnabled == 1)
+        {
+            if (Convert.ToBoolean(Convert.ToInt16(state)) && Controller.UPvr_GetControllerPower(0) == 0 && Pvr_ControllerManager.controllerlink.Controller0.Rotation.eulerAngles != Vector3.zero)
+            {
+                StartCoroutine(ToastManager(6, true, 0f));
+                StartCoroutine(ToastManager(6, false, 3.0f));
+            }
+        }
+    }
     private bool SDKManagerInitFPS()
     {
         Transform[] father;
@@ -761,7 +1072,7 @@ public class Pvr_UnitySDKManager : MonoBehaviour
 
     private void setLongHomeKey()
     {
-        if (SDK.HeadDofNum == HeadDofNum.ThreeDof)
+        if (sdk.HmdOnlyrot)
         {
             if (pvr_UnitySDKSensor != null)
             {
@@ -781,9 +1092,13 @@ public class Pvr_UnitySDKManager : MonoBehaviour
         }
         else
         {
-            if (SDK.sixDofRecenter && pvr_UnitySDKSensor != null)
+            if (trackingmode == 4)
             {
+                pvr_UnitySDKSensor.OptionalResetUnitySDKSensor(1, 1);
 
+            }
+            else
+            {
                 if (safeToast.activeSelf)
                 {
                     if (isHasController && (Controller.UPvr_GetControllerState(0) == ControllerState.Connected || Controller.UPvr_GetControllerState(1) == ControllerState.Connected))
@@ -814,6 +1129,7 @@ public class Pvr_UnitySDKManager : MonoBehaviour
                     }
                 }
             }
+            
         }
     }
 
@@ -849,6 +1165,13 @@ public class Pvr_UnitySDKManager : MonoBehaviour
 
     void Awake()
     {
+
+#if !UNITY_EDITOR && UNITY_ANDROID
+        var javaVrActivityClass = new AndroidJavaClass("com.psmart.vrlib.VrActivity");
+        var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+        var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+        Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaVrActivityClass, "SetSecure", activity,SDK.Copyrightprotection);
+#endif
         var controllermanager = FindObjectOfType<Pvr_ControllerManager>();
         isHasController = controllermanager != null;
         PLOG.getConfigTraceLevel();
@@ -857,8 +1180,8 @@ public class Pvr_UnitySDKManager : MonoBehaviour
         Debug.Log("viewer :" + isViewerLogicFlow.ToString());
         if (isViewerLogicFlow)
         {
-            HeadDofNum = HeadDofNum.ThreeDof;
-            HandDofNum = HandDofNum.ThreeDof;
+            SDK.HmdOnlyrot = true;
+            SDK.ControllerOnlyrot = true;
         }
         else
         {
@@ -869,8 +1192,8 @@ public class Pvr_UnitySDKManager : MonoBehaviour
             {
                 if (trackingmode == 1 || trackingmode == 0)
                 {
-                    HeadDofNum = HeadDofNum.ThreeDof;
-                    HandDofNum = HandDofNum.ThreeDof;
+                    SDK.HmdOnlyrot = true;
+                    SDK.ControllerOnlyrot = true;
                 } 
             }
         }
@@ -891,21 +1214,24 @@ public class Pvr_UnitySDKManager : MonoBehaviour
         }
 
 #if !UNITY_EDITOR && UNITY_ANDROID
-        float neckx = 0.0f;
-        float necky = 0.0f;
-        float neckz = 0.0f;
-        int modelx = (int) GlobalFloatConfigs.NECK_MODEL_X;
-        int modely = (int) GlobalFloatConfigs.NECK_MODEL_Y;
-        int modelz = (int) GlobalFloatConfigs.NECK_MODEL_Z;
-        Render.UPvr_GetFloatConfig(modelx, ref neckx);
-        Render.UPvr_GetFloatConfig(modely, ref necky);
-        Render.UPvr_GetFloatConfig(modelz, ref neckz);
-        if (neckx != 0.0f || necky != 0.0f || neckz != 0.0f)
+        if (!UseCustomNeckPara)
         {
-            neckOffset = new Vector3(neckx, necky, neckz);
+            float neckx = 0.0f;
+            float necky = 0.0f;
+            float neckz = 0.0f;
+            int modelx = (int) GlobalFloatConfigs.NECK_MODEL_X;
+            int modely = (int) GlobalFloatConfigs.NECK_MODEL_Y;
+            int modelz = (int) GlobalFloatConfigs.NECK_MODEL_Z;
+            Render.UPvr_GetFloatConfig(modelx, ref neckx);
+            Render.UPvr_GetFloatConfig(modely, ref necky);
+            Render.UPvr_GetFloatConfig(modelz, ref neckz);
+            if (neckx != 0.0f || necky != 0.0f || neckz != 0.0f)
+            {
+                neckOffset = new Vector3(neckx, necky, neckz);
+            }
         }
 #endif
-
+        Render.UPvr_GetIntConfig((int)GlobalIntConfigs.iPhoneHMDModeEnabled, ref iPhoneHMDModeEnabled);
         if (sdk == null)
         {
             sdk = this;
@@ -930,9 +1256,28 @@ public class Pvr_UnitySDKManager : MonoBehaviour
 
         safeArea = transform.Find("SafeArea2").gameObject;
         safeToast = transform.Find("SafeToast").gameObject;
+        if (trackingmode == 2 || trackingmode == 3)
+        {
+            safeArea.transform.localScale = Vector3.one;
+            safeToast.transform.localScale = Vector3.one;
+        }
+        else
+        {
+            safeArea.transform.localScale = Vector3.zero;
+            safeToast.transform.localScale = Vector3.zero;
+        }
         resetPanel = transform.Find("ResetPanel").gameObject;
         safePanel1 = transform.Find("SafePanel1").gameObject;
-        safePanel2 = transform.Find("SafePanel2").gameObject;
+
+        calltoast = transform.Find("Head/Canvas/Call").gameObject;
+        msgtoast = transform.Find("Head/Canvas/Msg").gameObject;
+        lowhmdBatterytoast = transform.Find("Head/Canvas/LowHmdBattery").gameObject;
+        lowphoneBatterytoast = transform.Find("Head/Canvas/LowPhoneBattery").gameObject;
+        LowPhoneHealthtoast = transform.Find("Head/Canvas/LowPhoneHealth").gameObject;
+        LowcontrollerBatterytoast = transform.Find("Head/Canvas/LowControllerBattery").gameObject;
+
+        Pvr_ControllerManager.ControllerStatusChangeEvent += CheckControllerStateForG2;
+
         if (isViewerLogicFlow)
         {
             ViewerToast = transform.Find("Head").Find("Viewertoast").gameObject;
@@ -959,10 +1304,6 @@ public class Pvr_UnitySDKManager : MonoBehaviour
             {
                 DestroyObject(safePanel1);
             }
-            if (safePanel2 != null)
-            {
-                DestroyObject(safePanel2);
-            }
 #endif
         }
         else
@@ -975,37 +1316,68 @@ public class Pvr_UnitySDKManager : MonoBehaviour
                 safeToast.transform.Find("Panel/Image").localPosition = new Vector3(0, -108, 0);
                 safeToast.transform.Find("Panel/Text").GetComponent<RectTransform>().sizeDelta = new Vector2(440, 180);
                 safeToast.transform.Find("Panel/Text").localPosition = new Vector3(10, 55, 0);
-                safePanel2.transform.Find("Panel/Title").GetComponent<Text>().text = "Warning";
-                safePanel2.transform.Find("Panel/toast2").GetComponent<Text>().text = "This device does not support this applications";
-                safePanel2.transform.Find("Panel/forcequitBtn/Text").GetComponent<Text>().text = "Quit";
                 safePanel1.transform.Find("Panel").GetComponent<RectTransform>().sizeDelta = new Vector2(470, 470);
                 safePanel1.transform.Find("Panel/toast1").GetComponent<RectTransform>().sizeDelta = new Vector2(425, 200);
                 resetPanel.transform.Find("Panel").GetComponent<RectTransform>().sizeDelta = new Vector2(470, 470);
                 resetPanel.transform.Find("Panel/toast").GetComponent<RectTransform>().sizeDelta = new Vector2(440, 180);
-                if (DefaultRange)
+
+                if (Application.systemLanguage == SystemLanguage.English)
                 {
-                    resetPanel.transform.Find("Panel/toast").GetComponent<Text>().text =
-                        "Please take off the headset，insure there have no obstacles in the radius of 0.8 meters，then press on 【confirm button】 again";
-                    safePanel1.transform.Find("Panel/toast1").GetComponent<Text>().text =
-                        "Safe zone has reset successfully, please insure there have no obstacles in the radius of 0.8 meters，then press on 【confirm button】";
+                    if (DefaultRange)
+                    {
+                        resetPanel.transform.Find("Panel/toast").GetComponent<Text>().text =
+                            "Please take off the headset，insure there have no obstacles in the radius of 0.8 meters，then press on 【confirm button】 again";
+                        safePanel1.transform.Find("Panel/toast1").GetComponent<Text>().text =
+                            "Safe zone has reset successfully, please insure there have no obstacles in the radius of 0.8 meters，then press on 【confirm button】";
+                    }
+                    else
+                    {
+                        resetPanel.transform.Find("Panel/toast").GetComponent<Text>().text =
+                            "Please take off the headset，insure there have no obstacles in the radius of " + CustomRange + " meters，then press on 【confirm button】 again";
+                        safePanel1.transform.Find("Panel/toast1").GetComponent<Text>().text =
+                            "Safe zone has reset successfully, please insure there have no obstacles in the radius of " + CustomRange + " meters，then press on 【confirm button】";
+                    }
                 }
-                else
+
+                if (Application.systemLanguage == SystemLanguage.Korean)
                 {
-                    resetPanel.transform.Find("Panel/toast").GetComponent<Text>().text =
-                        "Please take off the headset，insure there have no obstacles in the radius of " + CustomRange + " meters，then press on 【confirm button】 again";
-                    safePanel1.transform.Find("Panel/toast1").GetComponent<Text>().text =
-                        "Safe zone has reset successfully, please insure there have no obstacles in the radius of " + CustomRange + " meters，then press on 【confirm button】";
+                    if (DefaultRange)
+                    {
+                        resetPanel.transform.Find("Panel/toast").GetComponent<Text>().text =
+                            "헤드셋을 벗고 주변 반경 0.8m 범위 내에 장애물이 없도록 확보해 주신 후 다시 【확인 키】를 눌러 위치를 리셋해 주십시오";
+                        safePanel1.transform.Find("Panel/toast1").GetComponent<Text>().text =
+                            "안전 구역이 리셋되었으니 헤드셋을 벗고 주변 반경 0.8m 범위 내에 장애물이 없도록 확보해 주신 후 【확인 키】를 눌러 주십시오.";
+                    }
+                    else
+                    {
+                        resetPanel.transform.Find("Panel/toast").GetComponent<Text>().text =
+                            "헤드셋을 벗고 주변 반경 " + CustomRange + " 범위 내에 장애물이 없도록 확보해 주신 후 다시 【확인 키】를 눌러 위치를 리셋해 주십시오";
+                        safePanel1.transform.Find("Panel/toast1").GetComponent<Text>().text =
+                            "안전 구역이 리셋되었으니 헤드셋을 벗고 주변 반경 " + CustomRange + " 범위 내에 장애물이 없도록 확보해 주신 후 【확인 키】를 눌러 주십시오.";
+                    }
                 }
+
+                if (Application.systemLanguage == SystemLanguage.Japanese)
+                {
+                    if (DefaultRange)
+                    {
+                        resetPanel.transform.Find("Panel/toast").GetComponent<Text>().text =
+                            "ヘッドセットを取り外して、半径0.8メルトに障害物がないように確認して、また確認ボタンを押してください";
+                        safePanel1.transform.Find("Panel/toast1").GetComponent<Text>().text =
+                            "安全域がリエットしました、ヘッドセットを取り外して、半径0.8メルトに障害物がないように確認して、確認ボタンを押してください";
+                    }
+                    else
+                    {
+                        resetPanel.transform.Find("Panel/toast").GetComponent<Text>().text =
+                            "ヘッドセットを取り外して、半径 " + CustomRange + " メルトに障害物がないように確認して、また確認ボタンを押してください";
+                        safePanel1.transform.Find("Panel/toast1").GetComponent<Text>().text =
+                            "安全域がリエットしました、ヘッドセットを取り外して、半径" + CustomRange + "メルトに障害物がないように確認して、確認ボタンを押してください";
+                    }
+                }
+                
             }
 #if !UNITY_EDITOR && UNITY_ANDROID
-            if (HeadDofNum == HeadDofNum.SixDof || HandDofNum == HandDofNum.SixDof )
-            {
-                if (trackingmode == 1 || trackingmode == 0)
-                {
-                    safePanel2.SetActive(true);
-                }
-            }
-            if (HeadDofNum == HeadDofNum.SixDof)
+            if (!SDK.HmdOnlyrot)
             {
                 if (Sensor.Pvr_IsHead6dofReset() && ShowSafePanel)
                 {
@@ -1014,6 +1386,43 @@ public class Pvr_UnitySDKManager : MonoBehaviour
             }
 #endif
         }
+
+
+        //korean toast
+        if (Application.systemLanguage == SystemLanguage.English)
+        {
+            msgtoast.transform.Find("Text").GetComponent<Text>().text = "Receive a message";
+            msgtoast.transform.Find("string").GetComponent<Text>().text = "To check MMS，please take off HMD and plug out HMD from smart phone";
+            calltoast.transform.Find("Text").GetComponent<Text>().text = "Incoming Call";
+            calltoast.transform.Find("Text").GetComponent<Text>().text = "To check phone call or MMS，please take off HMD and plug out HMD from smart phone";
+            lowhmdBatterytoast.transform.Find("Text").GetComponent<Text>().text = "VR device low battery，5% remaining，please charge";
+            lowphoneBatterytoast.transform.Find("Text").GetComponent<Text>().text = "Smart phone low battery，5% remaining，please charge";
+            LowPhoneHealthtoast.transform.Find("Text").GetComponent<Text>().text = "Heat warning，please take off HMD and plug out HMD from smart phone";
+            LowcontrollerBatterytoast.transform.Find("Text").GetComponent<Text>().text = "Low battery of controller";
+        }
+        if (Application.systemLanguage == SystemLanguage.Japanese)
+        {
+            msgtoast.transform.Find("Text").GetComponent<Text>().text = "新着メッセージがあります";
+            msgtoast.transform.Find("string").GetComponent<Text>().text = "メッセージを見るには、ヘッドセットを取り外して、スマートホンからヘッドセットを外しでください";
+            calltoast.transform.Find("Text").GetComponent<Text>().text = "お電話です";
+            calltoast.transform.Find("Text").GetComponent<Text>().text = "応答するには、ヘッドセットを取り外して、スマートホンからヘッドセットを外しでください";
+            lowhmdBatterytoast.transform.Find("Text").GetComponent<Text>().text = "ヘッドセットのバッテリー残量が5％になっています";
+            lowphoneBatterytoast.transform.Find("Text").GetComponent<Text>().text = "スマートホンのバッテリー残量が5％になっています";
+            LowPhoneHealthtoast.transform.Find("Text").GetComponent<Text>().text = "スマートホンが過熱になっています、今すぐにヘッドセットを取り外して、スマートホンからヘッドセットを外しでください";
+            LowcontrollerBatterytoast.transform.Find("Text").GetComponent<Text>().text = "コントローラーのバッテリー残量が低いです";
+        }
+        if (Application.systemLanguage == SystemLanguage.Chinese || Application.systemLanguage == SystemLanguage.ChineseSimplified)
+        {
+            msgtoast.transform.Find("Text").GetComponent<Text>().text = "收到短信";
+            msgtoast.transform.Find("string").GetComponent<Text>().text = "如需确认,请摘下VR设备并断开连接";
+            calltoast.transform.Find("Text").GetComponent<Text>().text = "收到来电";
+            calltoast.transform.Find("Text").GetComponent<Text>().text = "如接听来电,请摘下VR设备并断开连接";
+            lowhmdBatterytoast.transform.Find("Text").GetComponent<Text>().text = "VR设备电量低于5%";
+            lowphoneBatterytoast.transform.Find("Text").GetComponent<Text>().text = "手机电量低于5%";
+            LowPhoneHealthtoast.transform.Find("Text").GetComponent<Text>().text = "手机过热，请摘下头戴并拔掉USB线，暂停使用该设备";
+            LowcontrollerBatterytoast.transform.Find("Text").GetComponent<Text>().text = "手柄电量不足";
+        }
+
     }
 
 
@@ -1053,6 +1462,25 @@ public class Pvr_UnitySDKManager : MonoBehaviour
 
     void Update()
     {
+        if (isHasController  && iPhoneHMDModeEnabled ==1)
+        {
+            if (Controller.UPvr_GetControllerPower(0) == 0 && Pvr_ControllerManager.controllerlink.controller0Connected && Pvr_ControllerManager.controllerlink.Controller0.Rotation.eulerAngles != Vector3.zero)
+            {
+                if (!lowControllerpowerstate)
+                {
+                    StartCoroutine(ToastManager(6, true, 0f));
+                    StartCoroutine(ToastManager(6, false, 3.0f));
+                    lowControllerpowerstate = true;
+                }
+
+                controllerpowershowtime += Time.deltaTime;
+                if (controllerpowershowtime >= 3600f)
+                {
+                    lowControllerpowerstate = false;
+                    controllerpowershowtime = 0f;
+                }
+            }
+        }
         if (Input.touchCount == 1)
         {
             if (Input.touches[0].phase == TouchPhase.Began)
@@ -1083,11 +1511,23 @@ public class Pvr_UnitySDKManager : MonoBehaviour
                         safeToast.transform.Find("Panel/Text").GetComponent<Text>().text =
                             "若需重置位置，请确保周围半径0.8米范围内没有障碍物，将手柄指向前方，长按【Home键】";
                     }
-                    else
+                    if(Application.systemLanguage == SystemLanguage.English)
                     {
 
                         safeToast.transform.Find("Panel/Text").GetComponent<Text>().text =
                             "To reset safe zone，please insure there have no obstacles in the radius of 0.8 meters，then point the controller forward，long press on the 【home button】";
+                    }
+
+                    if (Application.systemLanguage == SystemLanguage.Korean)
+                    {
+                        safeToast.transform.Find("Panel/Text").GetComponent<Text>().text =
+                            "위치를 리셋해야 할 경우, 주변 반경 0.8m 범위 내에 장애물이 없도록 확보해 주시고 컨트롤러를 앞쪽으로 가리키며 【Home 키】를 길게 눌러 주십시오";
+                    }
+
+                    if (Application.systemLanguage == SystemLanguage.Japanese)
+                    {
+                        safeToast.transform.Find("Panel/Text").GetComponent<Text>().text =
+                            "安全域をリセットしたい時は、半径0.8メルトに障害物がないように確認して、Homeボタンを長押ししてください";
                     }
                 }
                 else
@@ -1098,11 +1538,23 @@ public class Pvr_UnitySDKManager : MonoBehaviour
                         safeToast.transform.Find("Panel/Text").GetComponent<Text>().text =
                             "若需重置位置，请确保周围半径" + CustomRange + "米范围内没有障碍物，将手柄指向前方，长按【Home键】";
                     }
-                    else
+                    if (Application.systemLanguage == SystemLanguage.English)
                     {
 
                         safeToast.transform.Find("Panel/Text").GetComponent<Text>().text =
                             "To reset safe zone，please insure there have no obstacles in the radius of " + CustomRange + " meters，then point the controller forward，long press on the 【home button】";
+                    }
+
+                    if (Application.systemLanguage == SystemLanguage.Korean)
+                    {
+                        safeToast.transform.Find("Panel/Text").GetComponent<Text>().text =
+                            "위치를 리셋해야 할 경우, 주변 반경 " + CustomRange + " 범위 내에 장애물이 없도록 확보해 주시고 컨트롤러를 앞쪽으로 가리키며 【Home 키】를 길게 눌러 주십시오";
+                    }
+
+                    if (Application.systemLanguage == SystemLanguage.Japanese)
+                    {
+                        safeToast.transform.Find("Panel/Text").GetComponent<Text>().text =
+                            "安全域をリセットしたい時は、半径" + CustomRange + "メルトに障害物がないように確認して、Homeボタンを長押ししてください";
                     }
 
                 }
@@ -1190,105 +1642,102 @@ public class Pvr_UnitySDKManager : MonoBehaviour
             safePanel1.transform.localPosition = SDK.HeadPose.Position;
             safePanel1.transform.localRotation = Quaternion.Euler(0, SDK.HeadPose.Orientation.eulerAngles.y, 0);
         }
-   
-        if (safePanel2.activeSelf)
-        {
-            safePanel2.transform.localPosition = SDK.HeadPose.Position;
-            safePanel2.transform.localRotation = Quaternion.Euler(0, SDK.HeadPose.Orientation.eulerAngles.y, 0);
-        }
 
-        if (HeadDofNum == HeadDofNum.SixDof)
-        {
-            //default 0.8m
-            if (DefaultRange)
+            if (trackingmode == 2 || trackingmode == 3)
             {
-                if (isHasController)
+                if (!SDK.HmdOnlyrot)
                 {
-                    if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x,2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > 0.56f || Mathf.Sqrt(Mathf.Pow(Controller.UPvr_GetControllerPOS(0).x, 2.0f) + Mathf.Pow(Controller.UPvr_GetControllerPOS(0).z, 2.0f)) > 0.8f || Mathf.Sqrt(Mathf.Pow(Controller.UPvr_GetControllerPOS(1).x, 2.0f) + Mathf.Pow(Controller.UPvr_GetControllerPOS(1).z, 2.0f)) > 0.8f)
+                    //default 0.8m
+                    if (DefaultRange)
                     {
-                        safeArea.transform.localScale = new Vector3(1.6f, 1.6f, 1.6f);
-                        safeArea.SetActive(true);
+                        if (isHasController)
+                        {
+                            if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > 0.56f || Mathf.Sqrt(Mathf.Pow(Controller.UPvr_GetControllerPOS(0).x, 2.0f) + Mathf.Pow(Controller.UPvr_GetControllerPOS(0).z, 2.0f)) > 0.8f || Mathf.Sqrt(Mathf.Pow(Controller.UPvr_GetControllerPOS(1).x, 2.0f) + Mathf.Pow(Controller.UPvr_GetControllerPOS(1).z, 2.0f)) > 0.8f)
+                            {
+                                safeArea.transform.localScale = new Vector3(1.6f, 1.6f, 1.6f);
+                                safeArea.SetActive(true);
+                            }
+                            else
+                            {
+                                safeArea.SetActive(false);
+                            }
+                        }
+                        else
+                        {
+                            if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > 0.56f)
+                            {
+                                safeArea.transform.localScale = new Vector3(1.6f, 1.6f, 1.6f);
+                                safeArea.SetActive(true);
+                            }
+                            else
+                            {
+                                safeArea.SetActive(false);
+                            }
+                        }
+
+                        if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > 0.8f)
+                        {
+                            if (!safeToast.activeSelf)
+                            {
+                                safeToast.transform.Find("Panel").GetComponent<Canvas>().sortingOrder = resetPanel.transform.Find("Panel").GetComponent<Canvas>().sortingOrder + 1;
+                                safeToast.SetActive(true);
+                            }
+                        }
+                        else
+                        {
+                            if (safeToast.activeSelf)
+                            {
+                                safeToast.SetActive(false);
+                                safeToast.transform.Find("Panel").GetComponent<Canvas>().sortingOrder = 10001;
+                            }
+                        }
                     }
                     else
                     {
-                        safeArea.SetActive(false);
-                    }
-                }
-                else
-                {
-                    if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > 0.56f)
-                    {
-                        safeArea.transform.localScale = new Vector3(1.6f, 1.6f, 1.6f);
-                        safeArea.SetActive(true);
-                    }
-                    else
-                    {
-                        safeArea.SetActive(false);
-                    }
-                }
-                
-                if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > 0.8f)
-                {
-                    if (!safeToast.activeSelf)
-                    {
-                        safeToast.transform.Find("Panel").GetComponent<Canvas>().sortingOrder = resetPanel.transform.Find("Panel").GetComponent<Canvas>().sortingOrder + 1;
-                        safeToast.SetActive(true);
-                    }
-                }
-                else
-                {
-                    if (safeToast.activeSelf)
-                    {
-                        safeToast.SetActive(false);
-                        safeToast.transform.Find("Panel").GetComponent<Canvas>().sortingOrder = 10001;
+                        if (isHasController)
+                        {
+                            if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > (0.7f * CustomRange) || Mathf.Sqrt(Mathf.Pow(Controller.UPvr_GetControllerPOS(0).x, 2.0f) + Mathf.Pow(Controller.UPvr_GetControllerPOS(0).z, 2.0f)) > CustomRange || Mathf.Sqrt(Mathf.Pow(Controller.UPvr_GetControllerPOS(1).x, 2.0f) + Mathf.Pow(Controller.UPvr_GetControllerPOS(1).z, 2.0f)) > CustomRange)
+                            {
+                                safeArea.transform.localScale = new Vector3(CustomRange / 0.5f, CustomRange / 0.5f, CustomRange / 0.5f);
+                                safeArea.SetActive(true);
+                            }
+                            else
+                            {
+                                safeArea.SetActive(false);
+                            }
+                        }
+                        else
+                        {
+                            if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > (0.7f * CustomRange))
+                            {
+                                safeArea.transform.localScale =
+                                    new Vector3(CustomRange / 0.5f, CustomRange / 0.5f, CustomRange / 0.5f);
+                                safeArea.SetActive(true);
+                            }
+                            else
+                            {
+                                safeArea.SetActive(false);
+                            }
+                        }
+                        if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > CustomRange)
+                        {
+                            if (!safeToast.activeSelf)
+                            {
+                                safeToast.transform.Find("Panel").GetComponent<Canvas>().sortingOrder = resetPanel.transform.Find("Panel").GetComponent<Canvas>().sortingOrder + 1;
+                                safeToast.SetActive(true);
+                            }
+                        }
+                        else
+                        {
+                            if (safeToast.activeSelf)
+                            {
+                                safeToast.SetActive(false);
+                                safeToast.transform.Find("Panel").GetComponent<Canvas>().sortingOrder = 10001;
+                            }
+                        }
                     }
                 }
             }
-            else
-            {
-                if (isHasController)
-                {
-                    if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > (0.7f * CustomRange) || Mathf.Sqrt(Mathf.Pow(Controller.UPvr_GetControllerPOS(0).x, 2.0f) + Mathf.Pow(Controller.UPvr_GetControllerPOS(0).z, 2.0f)) > CustomRange || Mathf.Sqrt(Mathf.Pow(Controller.UPvr_GetControllerPOS(1).x, 2.0f) + Mathf.Pow(Controller.UPvr_GetControllerPOS(1).z, 2.0f)) > CustomRange)
-                    {
-                        safeArea.transform.localScale = new Vector3(CustomRange / 0.5f, CustomRange / 0.5f, CustomRange / 0.5f);
-                        safeArea.SetActive(true);
-                    }
-                    else
-                    {
-                        safeArea.SetActive(false);
-                    }
-                }
-                else
-                {
-                    if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > (0.7f * CustomRange))
-                    {
-                        safeArea.transform.localScale =
-                            new Vector3(CustomRange / 0.5f, CustomRange / 0.5f, CustomRange / 0.5f);
-                        safeArea.SetActive(true);
-                    }
-                    else
-                    {
-                        safeArea.SetActive(false);
-                    }
-                }
-                if (Mathf.Sqrt(Mathf.Pow(HeadPose.Position.x, 2.0f) + Mathf.Pow(HeadPose.Position.z, 2.0f)) > CustomRange)
-                {
-                    if (!safeToast.activeSelf)
-                    {
-                        safeToast.transform.Find("Panel").GetComponent<Canvas>().sortingOrder = resetPanel.transform.Find("Panel").GetComponent<Canvas>().sortingOrder + 1;
-                        safeToast.SetActive(true);
-                    }
-                }
-                else
-                {
-                    if (safeToast.activeSelf)
-                    {
-                        safeToast.SetActive(false);
-                        safeToast.transform.Find("Panel").GetComponent<Canvas>().sortingOrder = 10001;
-                    }
-                }
-            }
-        }
 #endif
         }
     }
@@ -1302,6 +1751,7 @@ public class Pvr_UnitySDKManager : MonoBehaviour
         RenderTexture.active = null;
         Resources.UnloadUnusedAssets();
         System.GC.Collect();
+        Pvr_ControllerManager.ControllerStatusChangeEvent -= CheckControllerStateForG2;
     }
 
     public void OnApplicationQuit()
@@ -1346,9 +1796,12 @@ public class Pvr_UnitySDKManager : MonoBehaviour
 #if UNITY_ANDROID && !UNITY_EDITOR
         if (!isViewerLogicFlow)
         {
-            bool state = GetPauseState();
-            Debug.Log("tclogpp Avtivity Pause state is ----- " + state);
-            pause = state;
+            if (Pvr_UnitySDKAPI.System.UPvr_IsPicoActivity())
+            {
+                bool state = Pvr_UnitySDKAPI.System.UPvr_GetMainActivityPauseStatus();
+                Debug.Log("Current Activity Pause State:" + state);
+                pause = state;
+            }
         }
 
         if (pause)
@@ -1386,6 +1839,10 @@ public class Pvr_UnitySDKManager : MonoBehaviour
     {
         Pvr_UnitySDKPluginEvent.Issue(RenderEventType.Resume);
         this.isEnterVRMode = true;
+        if (eventEnterVRMode != null)
+        {
+            eventEnterVRMode();
+        }
     }
 
     public void LeaveVRMode()
@@ -1438,7 +1895,7 @@ public class Pvr_UnitySDKManager : MonoBehaviour
                         pvr_UnitySDKSensor.ResetUnitySDKSensor();
                     }
                 }
-                if (HeadDofNum == HeadDofNum.SixDof)
+                if (!SDK.HmdOnlyrot)
                 {
                     if (Sensor.Pvr_IsHead6dofReset() && ShowSafePanel)
                     {
@@ -1448,35 +1905,20 @@ public class Pvr_UnitySDKManager : MonoBehaviour
 
             }
         }
-        bool setMonoPresentation = Pvr_UnitySDKAPI.System.UPvr_SetMonoPresentation();
-        Debug.Log("onresume set monoPresentation success ?-------------" + setMonoPresentation.ToString());
-        if (!setMonoPresentation)
+
+        if (Pvr_UnitySDKAPI.System.UPvr_IsPicoActivity())
         {
-            Debug.LogError("SetMonoPresentation Error");
+            bool setMonoPresentation = Pvr_UnitySDKAPI.System.UPvr_SetMonoPresentation();
+            Debug.Log("onresume set monoPresentation success ?-------------" + setMonoPresentation.ToString());
+
+            bool isPresentationExisted = Pvr_UnitySDKAPI.System.UPvr_IsPresentationExisted();
+            Debug.Log("onresume presentation existed ?-------------" + isPresentationExisted.ToString());
         }
-        bool isPresentationExisted = Pvr_UnitySDKAPI.System.UPvr_IsPresentationExisted();
-        Debug.Log("onresume presentation existed ?-------------" + isPresentationExisted.ToString());
-        if (isPresentationExisted)
-        {
-            yield return new WaitForSeconds(1.0f);
-        }
-        else
-        {
-            yield return new WaitForSeconds(1.0f);
-        }
+
+        yield return new WaitForSeconds(1.0f);
 
         this.EnterVRMode();
         Pvr_UnitySDKAPI.System.UPvr_StartHomeKeyReceiver(this.gameObject.name);
         Pvr_UnitySDKEye.setLevel = false;
-    }
-
-    private bool GetPauseState()
-    {
-        var state = false;
-#if !UNITY_EDITOR && UNITY_ANDROID
-        var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayerNativeActivityPico");
-        state = unityPlayer.GetStatic<bool>("ispause");
-#endif
-        return state;
     }
 }

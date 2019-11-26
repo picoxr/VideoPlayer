@@ -14,15 +14,11 @@ public class Pvr_SDKSetting : EditorWindow
 
     const BuildTarget recommended_BuildTarget = BuildTarget.Android;
     const int recommended_vSyncCount = 0;
-    const ColorSpace recommended_ColorSpace = ColorSpace.Gamma;
-    const bool recommended_mobileMTRendering = false;
     const UIOrientation recommended_orientation = UIOrientation.LandscapeLeft;
 
 
     public bool toggleBuildTarget = true;
     public bool toggleVSync = true;
-    public bool toggleColorSpace = true;
-    public bool toggleMTRendering = true;
     public bool toggleOrientation = true;
     GUIStyle styleApply;
 
@@ -35,22 +31,17 @@ public class Pvr_SDKSetting : EditorWindow
 
     string[] strInformationText = { "Information:", "信息说明" };
     string[] strInfo1Text = { "1 Rotation tag in Androidmainfest: \n " +
-                                "  Versions after SDK2.7.6: \n" +
                                 "  <meta-data android:name=\"pvr.app.type\" android:value=\"vr\" /> \n" +
                                 "  <meta-data android:name=\"pvr.display.orientation\" android:value=\"180\" />",
                               "1 Rotation tag in Androidmainfest: \n " +
-                                "  Versions after SDK2.7.6: \n" +
                                 "  <meta-data android:name=\"pvr.app.type\" android:value=\"vr\" /> \n" +
                                 "  <meta-data android:name=\"pvr.display.orientation\" android:value=\"180\" />", };
     string[] strInfo2Text = { "2 Player Setting: \n" +
                                 "  Default Orientation setting Landscape Left",
                             "2 Player Setting: \n" +
                                 "  Default Orientation setting Landscape Left" };
-    string[] strInfo3Text = { "3 Default Orientation tag in Androidmainfest: \n " +
-                                "  android:screenOrientation=\"landscape  Left\"",
-                            "3 Default Orientation tag in Androidmainfest: \n " +
-                                "  android:screenOrientation=\"landscape  Left\"" };
-    string[] strInfo4Text = { "4 Get the lastest version of SDK:", "4 获取最新版本的SDK:" };
+    string[] strInfo3Text = { "3 Get the lastest version of SDK:", "3 获取最新版本的SDK:" };
+    string[] strInfoURL = { "http://us-dev.picovr.com/sdk", "http://dev.picovr.com/sdk" };
 
     string[] strConfigurationText = { "Configuration:", "配置" };
     string[] strConfiguration1Text = { "1 current:             Build Target = {0}\n" +
@@ -61,17 +52,9 @@ public class Pvr_SDKSetting : EditorWindow
                                        "   Recommended:  V Sync Count = {1}\n",
                                         "2 当前:             V Sync Count = {0}\n" +
                                        "   推荐:             V Sync Count = {1}\n" };
-    string[] strConfiguration3Text = { "3 current:             Color Space = {0}\n" +
-                                       "   Recommended:  Color Space = {1}\n",
-                                        "3 当前:             Color Space = {0}\n" +
-                                       "   推荐:             Color Space = {1}\n" };
-    string[] strConfiguration4Text = { "4 current:             Mobile MT Rendering = {0}\n" +
-                                       "   Recommended:  Mobile MT Rendering = {1}\n",
-                                        "5 当前:             Mobile MT Rendering = {0}\n" +
-                                       "   推荐:             Mobile MT Rendering = {1}\n" };
-    string[] strConfiguration5Text = { "5 current:             Orientation = {0}\n" +
+    string[] strConfiguration3Text = { "3 current:             Orientation = {0}\n" +
                                        "   Recommended:  Orientation = {1}\n",
-                                        "5 当前:             Orientation = {0}\n" +
+                                        "3 当前:             Orientation = {0}\n" +
                                        "   推荐:             Orientation = {1}\n" };
 
     string[] strBtnApply = { "Apply", "应用" };
@@ -154,13 +137,13 @@ public class Pvr_SDKSetting : EditorWindow
         GUILayout.Label(strInfo1Text[(int)elanguage]);
         GUILayout.Label(strInfo2Text[(int)elanguage]);
         GUILayout.Label(strInfo3Text[(int)elanguage]);
-        GUILayout.Label(strInfo4Text[(int)elanguage]);
 
+        string strURL = strInfoURL[(int)elanguage];
         GUIStyle style = new GUIStyle();
         style.normal.textColor = new Color(0, 122f / 255f, 204f / 255f);
-        if (GUILayout.Button("    http://dev.picovr.com/sdk", style))
+        if (GUILayout.Button("    " + strURL, style, GUILayout.Width(200)))
         {
-            Application.OpenURL("http://dev.picovr.com/sdk");
+            Application.OpenURL(strURL);
         }
 
         GUILayout.Label(strseparate, styleSlide);
@@ -175,16 +158,11 @@ public class Pvr_SDKSetting : EditorWindow
         string strinfo2 = string.Format(strConfiguration2Text[(int)elanguage], QualitySettings.vSyncCount, recommended_vSyncCount);
         EditorConfigurations(strinfo2, QualitySettings.vSyncCount == recommended_vSyncCount, ref toggleVSync);
 
-        string strinfo3 = string.Format(strConfiguration3Text[(int)elanguage], PlayerSettings.colorSpace, recommended_ColorSpace);
-        EditorConfigurations(strinfo3, PlayerSettings.colorSpace == recommended_ColorSpace, ref toggleColorSpace);
-
-        string strinfo4 = string.Format(strConfiguration4Text[(int)elanguage], PlayerSettings.GetMobileMTRendering(BuildTargetGroup.Android), recommended_mobileMTRendering);
-        EditorConfigurations(strinfo4, PlayerSettings.GetMobileMTRendering(BuildTargetGroup.Android) == recommended_mobileMTRendering, ref toggleMTRendering);
-
-        string strinfo5 = string.Format(strConfiguration5Text[(int)elanguage], PlayerSettings.defaultInterfaceOrientation, recommended_orientation);
-        EditorConfigurations(strinfo5, PlayerSettings.defaultInterfaceOrientation == recommended_orientation, ref toggleOrientation);
+        string strinfo3 = string.Format(strConfiguration3Text[(int)elanguage], PlayerSettings.defaultInterfaceOrientation, recommended_orientation);
+        EditorConfigurations(strinfo3, PlayerSettings.defaultInterfaceOrientation == recommended_orientation, ref toggleOrientation);
 
 
+        EditorGUILayout.Space();
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("", GUILayout.Width(200));
 
@@ -222,16 +200,6 @@ public class Pvr_SDKSetting : EditorWindow
             QualitySettings.vSyncCount = recommended_vSyncCount;
         }
 
-        if (toggleColorSpace && PlayerSettings.colorSpace != recommended_ColorSpace)
-        {
-            PlayerSettings.colorSpace = recommended_ColorSpace;
-        }
-
-        if (toggleMTRendering && PlayerSettings.GetMobileMTRendering(BuildTargetGroup.Android) != recommended_mobileMTRendering)
-        {
-            PlayerSettings.SetMobileMTRendering(BuildTargetGroup.Android, recommended_mobileMTRendering);
-        }
-
         if (toggleOrientation && PlayerSettings.defaultInterfaceOrientation != recommended_orientation)
         {
             PlayerSettings.defaultInterfaceOrientation = recommended_orientation;
@@ -262,8 +230,6 @@ public class Pvr_SDKSetting : EditorWindow
     {
         bool notApplied = (EditorUserBuildSettings.activeBuildTarget != recommended_BuildTarget) ||
                         (QualitySettings.vSyncCount != recommended_vSyncCount) ||
-                        (PlayerSettings.colorSpace != recommended_ColorSpace) ||
-                        (PlayerSettings.GetMobileMTRendering(BuildTargetGroup.Android) != recommended_mobileMTRendering) ||
                         (PlayerSettings.defaultInterfaceOrientation != recommended_orientation);
 
         if (!notApplied)

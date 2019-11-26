@@ -18,7 +18,8 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
     public static List<Pvr_UnitySDKEyeOverlay> Instances = new List<Pvr_UnitySDKEyeOverlay>();
 
     public int layerIndex = 0;
-    public ImageType layerType = ImageType.StandardTexture;
+    public OverlayType overlayType = OverlayType.Overlay;
+    public ImageType imageType = ImageType.StandardTexture;
     public Transform layerTransform;
 
     public Texture[] layerTextures = new Texture[2];
@@ -41,8 +42,17 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
     {
         Instances.Add(this);
 
-        this.layerEyeCamera[0] = Pvr_UnitySDKEyeManager.Instance.LeftEyeCamera;
-        this.layerEyeCamera[1] = Pvr_UnitySDKEyeManager.Instance.RightEyeCamera;
+        if (Pvr_UnitySDKManager.SDK.Monoscopic)
+        {
+            this.layerEyeCamera[0] = Pvr_UnitySDKEyeManager.Instance.MonoEyeCamera;
+            this.layerEyeCamera[1] = Pvr_UnitySDKEyeManager.Instance.MonoEyeCamera;
+        }
+        else
+        {
+            this.layerEyeCamera[0] = Pvr_UnitySDKEyeManager.Instance.LeftEyeCamera;
+            this.layerEyeCamera[1] = Pvr_UnitySDKEyeManager.Instance.RightEyeCamera;
+        }
+
 
         this.layerTransform = this.GetComponent<Transform>();
 
@@ -65,7 +75,7 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
 
     private void InitializeBuffer()
     {
-        switch (this.layerType)
+        switch (this.imageType)
         {
             case ImageType.StandardTexture:              
             case ImageType.EquirectangularTexture:
@@ -94,7 +104,7 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
             return;
         }
 
-        if (this.layerType == ImageType.StandardTexture)
+        if (this.imageType == ImageType.StandardTexture)
         {
             // update MV matrix
             for (int i = 0; i < this.MVMatrixs.Length; i++)
@@ -125,5 +135,11 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
         StandardTexture = 0,
         //EglTexture = 1,
         EquirectangularTexture = 2
+    }
+
+    public enum OverlayType
+    {
+        Overlay = 0,
+        Underlay = 1
     }
 }

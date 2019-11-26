@@ -33,13 +33,16 @@ public class Pvr_ControllerLink
     public bool neoserviceStarted = false;
     public bool controller0Connected = false;
     public bool controller1Connected = false;
+    public int mainHandID = 0;
+    public int controllerType = 0;
     public ControllerHand Controller0;
     public ControllerHand Controller1;
     public int platFormType = -1; //0 phone，1 Pico Neo DK，2 Pico Goblin 3 Pico Neo
-    public int trackingmode = -1; //0:null,1:3dof,2:6dof 3:custom
-    public int systemProp = -1;   //0：goblin1 1：goblin1 2:neo 3:goblin2
+    public int trackingmode = -1; //0:null,1:3dof,2:cv 3:cv+hb 4:cv2 5:cv2+hb
+    public int systemProp = -1;   //0：goblin1 1：goblin1 2:neo 3:goblin2 4:neo2
     public int enablehand6dofbyhead = -1;
     public bool switchHomeKey = true;
+    private int iPhoneHMDModeEnabled = 0;
     public Pvr_ControllerLink(string name)
     {
         gameobjname = name;
@@ -48,7 +51,9 @@ public class Pvr_ControllerLink
         Debug.Log(gameobjname);
         StartHummingBirdService();
         Controller0 = new ControllerHand();
+        Controller0.Position = new Vector3(-0.1f, -0.3f, 0.3f);
         Controller1 = new ControllerHand();
+        Controller1.Position = new Vector3(0.1f, -0.3f, 0.3f);
     }
 
     private void StartHummingBirdService()
@@ -65,16 +70,16 @@ public class Pvr_ControllerLink
             Pvr_UnitySDKAPI.System.Pvr_SetInitActivity(activity.GetRawObject(), javaHummingbirdClass.GetRawClass());
             int enumindex = (int)GlobalIntConfigs.PLATFORM_TYPE;
             Render.UPvr_GetIntConfig(enumindex, ref platFormType);
-            PLOG.I("PvrLog platform" + platFormType);
+            Debug.Log("PvrLog platform" + platFormType);
             enumindex = (int)GlobalIntConfigs.TRACKING_MODE;
             Render.UPvr_GetIntConfig(enumindex, ref trackingmode);
-            PLOG.I("PvrLog trackingmode" + trackingmode);
+            Debug.Log("PvrLog trackingmode" + trackingmode);
             systemProp = GetSysproc();
-            PLOG.I("PvrLog systemProp" + systemProp);
+            Debug.Log("PvrLog systemProp" + systemProp);
             enumindex = (int) GlobalIntConfigs.ENBLE_HAND6DOF_BY_HEAD;
             Render.UPvr_GetIntConfig(enumindex, ref enablehand6dofbyhead);
-            PLOG.I("PvrLog enablehand6dofbyhead" + enablehand6dofbyhead);
-            if (trackingmode == 0 || trackingmode == 1 || (trackingmode == 3 && systemProp == 1) || (trackingmode == 3 && systemProp == 3))
+            Debug.Log("PvrLog enablehand6dofbyhead" + enablehand6dofbyhead);
+            if (trackingmode == 0 || trackingmode == 1 || (trackingmode == 3 || trackingmode == 5) && (systemProp == 1 || systemProp == 3))
             {
                 picoDevice = platFormType != 0;
                 javaPico2ReceiverClass = new UnityEngine.AndroidJavaClass("com.picovr.picovrlib.hummingbirdclient.HbClientReceiver");
@@ -86,9 +91,17 @@ public class Pvr_ControllerLink
                 picoDevice = true;
                 SetGameObjectToJar(gameobjname);
             }
-            if (IsServiceExisted())
+            Render.UPvr_GetIntConfig((int)GlobalIntConfigs.iPhoneHMDModeEnabled, ref iPhoneHMDModeEnabled);
+            if (iPhoneHMDModeEnabled == 1)
             {
                 BindService();
+            }
+            else
+            {
+                if (IsServiceExisted())
+                {
+                    BindService();
+                }
             }
         }
         catch (AndroidJavaException e)
@@ -105,12 +118,13 @@ public class Pvr_ControllerLink
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<bool>(ref service, javaserviceClass, "isServiceExisted", activity,trackingmode);
 #endif
-        PLOG.I("PvrLog ServiceExisted ?" + service);
+        Debug.Log("PvrLog ServiceExisted ?" + service);
         return service;
 
     }
     public void SetGameObjectToJar(string name)
     {
+        Debug.Log("PvrLog SetGameObjectToJar " + name);
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaCVClass, "setGameObjectCallback", name);
 #endif
@@ -118,14 +132,14 @@ public class Pvr_ControllerLink
 
     public void BindService()
     {
-        PLOG.I("PvrLog Start Bind");
+        Debug.Log("PvrLog Bind Service");
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaserviceClass, "bindService", activity,trackingmode);
 #endif
     }
     public void UnBindService()
     {
-        PLOG.I("PvrLog Start UnBind");
+        Debug.Log("PvrLog UnBind Service");
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaserviceClass, "unbindService", activity,trackingmode);
 #endif
@@ -133,6 +147,7 @@ public class Pvr_ControllerLink
 
     public void StopLark2Receiver()
     {
+        Debug.Log("PvrLog StopLark2Receiver");
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaPico2ReceiverClass, "stopReceiver",activity);
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaPico2ReceiverClass, "stopOnBootReceiver",activity);
@@ -140,12 +155,14 @@ public class Pvr_ControllerLink
     }
     public void StartLark2Receiver()
     {
+        Debug.Log("PvrLog StartLark2Receiver");
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaPico2ReceiverClass, "startReceiver",activity, gameobjname);
 #endif
     }
     public void StopLark2Service()
     {
+        Debug.Log("PvrLog StopLark2Service");
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaPico2ReceiverClass, "stopReceiver", activity); 
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaHummingbirdClass, "unbindHbService", activity);
@@ -153,6 +170,7 @@ public class Pvr_ControllerLink
     }
     public void StartLark2Service()
     {
+        Debug.Log("PvrLog StartLark2Service");
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaPico2ReceiverClass, "startReceiver",activity, gameobjname);
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaHummingbirdClass, "bindHbService", activity);
@@ -161,23 +179,35 @@ public class Pvr_ControllerLink
     public int getHandness()
     {
         int handness = -1;
+        if (iPhoneHMDModeEnabled == 0)
+        {
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref handness, javavractivityclass, "getPvrHandness", activity);
 #endif
-        PLOG.I("PvrLog HandNess =" + handness);
+        }
+        else
+        {
+            handness = Pvr_UnitySDKAPI.System.UPvr_GetPvrHandnessExt();
+        }
+        Debug.Log("PvrLog HandNess =" + handness);
         return handness;
     }
     public void StartScan()
     {
+        Debug.Log("PvrLog ScanController");
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaHummingbirdClass, "scanHbDevice", true);
 #endif
     }
     public void StopScan()
     {
+        Debug.Log("PvrLog StopScanController");
+        if (iPhoneHMDModeEnabled == 0)
+        {
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaHummingbirdClass, "scanHbDevice", false);
 #endif
+        }
     }
 
     public int GetSysproc()
@@ -191,6 +221,7 @@ public class Pvr_ControllerLink
 
     public void ResetController(int num)
     {
+        Debug.Log("PvrLog ResetController" + num);
 #if ANDROID_DEVICE
         if (neoserviceStarted)
         {
@@ -204,22 +235,22 @@ public class Pvr_ControllerLink
         Controller.Pvr_ResetSensor(3);
 
 #endif
-        PLOG.I("PvrLog ResetController" + num);
     }
 
     public void ConnectBLE()
     {
+        Debug.Log("PvrLog ConnectHBController" + hummingBirdMac);
         if (hummingBirdMac != "")
         {
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaHummingbirdClass, "connectHbController", hummingBirdMac);
 #endif
         }
-        PLOG.I("PvrLog ConnectHBController" + hummingBirdMac);
     }
 
     public void DisConnectBLE()
     {
+        Debug.Log("PvrLog DisConnectHBController");
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaHummingbirdClass, "disconnectHbController");
 #endif
@@ -306,6 +337,7 @@ public class Pvr_ControllerLink
 
     public void RebackToLauncher()
     {
+        Debug.Log("PvrLog RebackToLauncher");
 #if ANDROID_DEVICE
         if (neoserviceStarted)
         {
@@ -320,6 +352,7 @@ public class Pvr_ControllerLink
 
     public void TurnUpVolume()
     {
+        Debug.Log("PvrLog TurnUpVolume");
 #if ANDROID_DEVICE
         if (neoserviceStarted)
         {
@@ -330,11 +363,11 @@ public class Pvr_ControllerLink
             Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaHummingbirdClass, "turnUpVolume", activity);
         }
 #endif
-        PLOG.I("PvrLog TurnUpVolume");
     }
 
     public void TurnDownVolume()
     {
+        Debug.Log("PvrLog TurnDownVolume");
 #if ANDROID_DEVICE
         if (neoserviceStarted)
         {
@@ -345,7 +378,6 @@ public class Pvr_ControllerLink
             Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaHummingbirdClass, "turnDownVolume", activity);
         }
 #endif
-        PLOG.I("PvrLog TurnDownVolume");
     }
     
     public string GetHBControllerPoseData()
@@ -408,9 +440,26 @@ public class Pvr_ControllerLink
                data[8]);
         return data;
     }
-   
+
+    public int[] GetCV2ControllerKeyData(int hand)
+    {
+        if (trackingmode == 4 || trackingmode == 5)
+        {
+            var data = new int[4] { 0, 0, 0, 0 };
+#if ANDROID_DEVICE
+        Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(ref data, javaCVClass, "getCV2ControllerKeyEvent", hand);
+#endif
+            PLOG.D("PvrLog CV2ControllerKey" + data[0] + data[1] + data[2] + data[3]);
+            return data;
+        }
+        
+        return new int[4] { 0, 0, 0, 0 };
+
+    }
+
     public void AutoConnectHbController(int scanTimeMs)
     {
+        Debug.Log("PvrLog AutoConnectHbController" + scanTimeMs);
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaHummingbirdClass, "autoConnectHbController",scanTimeMs,gameobjname);
 #endif
@@ -422,17 +471,28 @@ public class Pvr_ControllerLink
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaCVClass, "startControllerThread",headSensorState,handSensorState);
 #endif
-        PLOG.I("PvrLog StartControllerThread" + headSensorState + handSensorState);
+        Debug.Log("PvrLog StartControllerThread" + headSensorState + handSensorState);
     }
     public void StopControllerThread(int headSensorState, int handSensorState)
     {
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaCVClass, "stopControllerThread",headSensorState,handSensorState);
 #endif
-        PLOG.I("PvrLog StopControllerThread" + headSensorState + handSensorState);
+        Debug.Log("PvrLog StopControllerThread" + headSensorState + handSensorState);
     }
 
-    
+    public void SetUnityVersionToJar(string version)
+    {
+        if (trackingmode == 4)
+        {
+#if ANDROID_DEVICE
+        Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaCVClass, "setUnityVersion",version);
+#endif
+            Debug.Log("PvrLog StopControllerThread" + version);
+        }
+    }
+
+
     public Vector3 GetAngularVelocity(int num)
     {
         var angulae = new float[3] { 0, 0, 0 };
@@ -494,7 +554,7 @@ public class Pvr_ControllerLink
             Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<string>(ref mac, javaHummingbirdClass, "getConnectedDeviceMac");
         }
 #endif
-        PLOG.I("PvrLog ConnectedDeviceMac:" + mac);
+        Debug.Log("PvrLog ConnectedDeviceMac:" + mac);
         return mac;
     }
   
@@ -508,6 +568,17 @@ public class Pvr_ControllerLink
 #endif
     }
 
+    public void VibrateNeo2Controller(float strength, int time, int hand)
+    {
+        Debug.Log("PvrLog VibrateNeo2Controller");
+#if ANDROID_DEVICE
+        if (neoserviceStarted)
+        {
+            Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaCVClass, "vibrateCV2ControllerStrength",strength,time, hand);
+        }
+#endif
+    }
+
     public int GetMainControllerIndex()
     {
         int index = 0;
@@ -517,12 +588,13 @@ public class Pvr_ControllerLink
             Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref index, javaCVClass, "getMainControllerIndex");
         }
 #endif
-        PLOG.I("PvrLog MainControllerIndex:" + index);
+        Debug.Log("PvrLog GetMainControllerIndex:" + index);
         return index;
     }
 
     public void SetMainController(int index)
     {
+        Debug.Log("PvrLog SetMainController:" + index);
 #if ANDROID_DEVICE
         if (neoserviceStarted)
         {
@@ -532,6 +604,7 @@ public class Pvr_ControllerLink
     }
     public void ResetHeadSensorForController()
     {
+        Debug.Log("PvrLog ResetHeadSensorForController:");
 #if ANDROID_DEVICE
         if (neoserviceStarted)
         {
@@ -698,7 +771,7 @@ public class Pvr_ControllerLink
            Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref index,javaCVClass, "getControllerAbility",controllerSerialNum);
         }
 #endif
-        PLOG.I("PvrLog ControllerAbility:" + index);
+        Debug.Log("PvrLog ControllerAbility:" + index);
         return index;
     }
 
@@ -742,7 +815,7 @@ public class Pvr_ControllerLink
 #if ANDROID_DEVICE
         Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref type,javaHummingbirdClass, "getDeviceType");
 #endif
-        PLOG.I("PvrLog DeviceType:" + type);
+        Debug.Log("PvrLog DeviceType:" + type);
         return type;
     }
 
@@ -775,5 +848,36 @@ public class Pvr_ControllerLink
         PLOG.I("PvrLog IsEnbleTrigger:" + state);
         return state;
     }
+
+    //deviceType: 0：scan both controller；1：scan left controller；2：scan right controller
+    public void StartCV2PairingMode(int devicetype)
+    {
+#if ANDROID_DEVICE
+        if (neoserviceStarted)
+        {
+           Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaCVClass, "startCV2PairingMode",devicetype); 
+        }
+#endif
+    }
+
+    public void StopCV2PairingMode(int devicetype)
+    {
+#if ANDROID_DEVICE
+        if (neoserviceStarted)
+        {
+           Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(javaCVClass, "stopCV2PairingMode",devicetype); 
+        }
+#endif
+    }
+    public int GetControllerBindingState(int id)
+    {
+        int type = -1;
+#if ANDROID_DEVICE
+        Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref type,javaCVClass, "getControllerBindingState",id);
+#endif
+        Debug.Log("PvrLog getControllerBindingState:" + type);
+        return type;
+    }
+
 
 }

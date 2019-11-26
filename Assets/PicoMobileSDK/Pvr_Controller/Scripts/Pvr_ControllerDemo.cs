@@ -37,17 +37,9 @@ public class Pvr_ControllerDemo : MonoBehaviour
             Pvr_ControllerManager.ControllerStatusChangeEvent += CheckControllerStateForGoblin;
             isHasController = true;
         }
-#if UNITY_EDITOR
+#if UNITY_EDITOR 
         currentController = controller0;
 #endif
-        if (Pvr_UnitySDKManager.SDK.HeadDofNum == HeadDofNum.SixDof || Pvr_UnitySDKManager.SDK.HandDofNum == HandDofNum.SixDof)
-        {
-            if (Pvr_UnitySDKManager.SDK.trackingmode == 0 || Pvr_UnitySDKManager.SDK.trackingmode == 1)
-            {
-                if (cube != null)
-                    cube.GetComponent<BoxCollider>().enabled = false;
-            }
-        }
         referenceObj = new GameObject("ReferenceObj");
     }
 
@@ -63,7 +55,6 @@ public class Pvr_ControllerDemo : MonoBehaviour
 
     void Update()
     {
-
         if (HeadSetController.activeSelf)
         {
             HeadSetController.transform.parent.localRotation = Quaternion.Euler(Pvr_UnitySDKManager.SDK.HeadPose.Orientation.eulerAngles.x, Pvr_UnitySDKManager.SDK.HeadPose.Orientation.eulerAngles.y, 0);
@@ -179,7 +170,7 @@ public class Pvr_ControllerDemo : MonoBehaviour
                             disY = hit.transform.position.y - referenceObj.transform.position.y;
                             dragObj = hit.transform;
                         }
-                        if (Controller.UPvr_GetKey(0, Pvr_KeyCode.TOUCHPAD) || Controller.UPvr_GetKeyDown(1, Pvr_KeyCode.TOUCHPAD) || Input.GetMouseButton(0))
+                        if (Controller.UPvr_GetKey(0, Pvr_KeyCode.TOUCHPAD) || Controller.UPvr_GetKey(1, Pvr_KeyCode.TOUCHPAD) || Input.GetMouseButton(0))
                         {
                             if (hit.transform == dragObj.transform)
                             {

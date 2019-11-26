@@ -9,12 +9,14 @@ public class Pvr_UnitySDKEyeOverlayEditor : Editor
     {
         foreach (Pvr_UnitySDKEyeOverlay overlayTarget in targets)
         {
-            if (overlayTarget.layerType != Pvr_UnitySDKEyeOverlay.ImageType.EquirectangularTexture)
+            if (overlayTarget.imageType != Pvr_UnitySDKEyeOverlay.ImageType.EquirectangularTexture)
             {
                 overlayTarget.layerIndex = EditorGUILayout.IntField("Layer Index", overlayTarget.layerIndex);
+
+                overlayTarget.overlayType = (Pvr_UnitySDKEyeOverlay.OverlayType)EditorGUILayout.EnumPopup("Overlay Type", overlayTarget.overlayType);
             }
 
-            overlayTarget.layerType = (Pvr_UnitySDKEyeOverlay.ImageType)EditorGUILayout.EnumPopup("Image Type", overlayTarget.layerType);
+            overlayTarget.imageType = (Pvr_UnitySDKEyeOverlay.ImageType)EditorGUILayout.EnumPopup("Image Type", overlayTarget.imageType);
 
 
             EditorGUILayout.Separator();
@@ -27,8 +29,14 @@ public class Pvr_UnitySDKEyeOverlayEditor : Editor
             overlayTarget.layerTextures[0] = (Texture2D)EditorGUI.ObjectField(new Rect(textureControlRect.x, textureControlRect.y, 64, textureControlRect.height), overlayTarget.layerTextures[0], typeof(Texture2D), false);
             overlayTarget.layerTextures[1] = (Texture2D)EditorGUI.ObjectField(new Rect(textureControlRect.x + textureControlRect.width / 2, textureControlRect.y, 64, textureControlRect.height), overlayTarget.layerTextures[1] != null ? overlayTarget.layerTextures[1] : overlayTarget.layerTextures[0], typeof(Texture2D), false);
 
-        }   
+        }
 
         //DrawDefaultInspector();
+        if (GUI.changed)
+        {
+#if !UNITY_5_2
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+#endif
+        }
     }
 }

@@ -139,7 +139,7 @@ public class Pvr_UIDraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandle
 
     protected virtual Pvr_UIPointer GetPointer()
     {
-        foreach (Pvr_UIPointer t in currentInputmodule.pointers)
+        foreach (Pvr_UIPointer t in Pvr_InputModule.pointers)
         {
             if (t.gameObject.activeInHierarchy && t)
             {

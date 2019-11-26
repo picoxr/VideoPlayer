@@ -234,7 +234,6 @@ namespace Pvr_UnitySDKAPI
             int currentlight = 0;
             try
             {
-              //  Debug.Log("johnson UPvr_GetCurrentBrightness");
                 Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref currentlight, javaSysActivityClass, "Pvr_GetScreen_Brightness", Pvr_UnitySDKManager.pvr_UnitySDKRender.activity);
             }
             catch (Exception e)
@@ -317,7 +316,6 @@ namespace Pvr_UnitySDKAPI
             try
             {  
                 Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref maxvolm, javaSysActivityClass, "Pvr_GetMaxAudionumber");
-               // Debug.Log("johnson UPvr_GetMaxVolumeNumber = "+maxvolm);
             }
             catch (Exception e)
             {

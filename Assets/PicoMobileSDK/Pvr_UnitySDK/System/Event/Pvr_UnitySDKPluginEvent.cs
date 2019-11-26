@@ -15,8 +15,7 @@ using UnityEngine;
 /// Matches the events in the native plugin.
 /// </summary>
 public enum RenderEventType
-{
-    
+{    
     InitRenderThread = 1024,
     Pause,
     Resume ,
@@ -26,6 +25,9 @@ public enum RenderEventType
     ResetVrModeParms,
     ShutdownRenderThread ,
     BeginEye,
+    EndEye,
+    BoundaryRenderLeft,
+    BoundaryRenderRight
 }
 
 

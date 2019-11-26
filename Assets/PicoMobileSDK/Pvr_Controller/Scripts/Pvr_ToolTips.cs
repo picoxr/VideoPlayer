@@ -16,14 +16,7 @@ public class Pvr_ToolTips : MonoBehaviour
     }
     private ControllerDevice currentDevice;
     private float tipsAlpha;
-
-    [SerializeField]
-    private GameObject trigger;
-    [SerializeField]
-    private GameObject home;
-    [SerializeField]
-    private GameObject app;
-
+    
     public void ChangeTipsText(TipBtn tip, string key)
     {
         switch (tip)
@@ -70,50 +63,68 @@ public class Pvr_ToolTips : MonoBehaviour
             transform.Find("apptip/btn/Text").GetComponent<Text>().text = "返回键";
             transform.Find("touchtip/btn/Text").GetComponent<Text>().text = "确认键";
             transform.Find("hometip/btn/Text").GetComponent<Text>().text = "Home键";
-            transform.Find("volup/btn/Text").GetComponent<Text>().text = "音量+";
-            transform.Find("voldown/btn/Text").GetComponent<Text>().text = "音量-";
-            transform.Find("triggertip/btn/Text").GetComponent<Text>().text = "扳机键";
+
+            var volup = transform.Find("volup/btn/Text");
+            if (volup != null)
+                volup.GetComponent<Text>().text = "音量+";
+            var voldown = transform.Find("voldown/btn/Text");
+            if(voldown !=null)
+                voldown.GetComponent<Text>().text = "音量-";
+            var trigtip = transform.Find("triggertip/btn/Text");
+            if(trigtip != null)
+                trigtip.GetComponent<Text>().text = "扳机键";
         }
-        else
+        if(localanguage == SystemLanguage.English)
         {
             transform.Find("apptip/btn/Text").GetComponent<Text>().text = "Back";
             transform.Find("touchtip/btn/Text").GetComponent<Text>().text = "Confirm";
             transform.Find("hometip/btn/Text").GetComponent<Text>().text = "Home";
-            transform.Find("volup/btn/Text").GetComponent<Text>().text = "Volume+";
-            transform.Find("voldown/btn/Text").GetComponent<Text>().text = "Volume-";
-            transform.Find("triggertip/btn/Text").GetComponent<Text>().text = "Trigger";
+            var volup = transform.Find("volup/btn/Text");
+            if (volup != null)
+                volup.GetComponent<Text>().text = "Volume+";
+            var voldown = transform.Find("voldown/btn/Text");
+            if (voldown != null)
+                voldown.GetComponent<Text>().text = "Volume-";
+            var trigtip = transform.Find("triggertip/btn/Text");
+            if (trigtip != null)
+                trigtip.GetComponent<Text>().text = "Trigger";
+        }
+        if (localanguage == SystemLanguage.Korean)
+        {
+            transform.Find("apptip/btn/Text").GetComponent<Text>().text = "리턴 키";
+            transform.Find("touchtip/btn/Text").GetComponent<Text>().text = "확인 키";
+            transform.Find("hometip/btn/Text").GetComponent<Text>().text = "Home 키";
+            var volup = transform.Find("volup/btn/Text");
+            if (volup != null)
+                volup.GetComponent<Text>().text = "볼륨+";
+            var voldown = transform.Find("voldown/btn/Text");
+            if (voldown != null)
+                voldown.GetComponent<Text>().text = "볼륨-";
+            var trigtip = transform.Find("triggertip/btn/Text");
+            if (trigtip != null)
+                trigtip.GetComponent<Text>().text = "트리거 키";
+        }
+        if (localanguage == SystemLanguage.Japanese)
+        {
+            transform.Find("apptip/btn/Text").GetComponent<Text>().text = "バック";
+            transform.Find("touchtip/btn/Text").GetComponent<Text>().text = "確認";
+            transform.Find("hometip/btn/Text").GetComponent<Text>().text = "Home";
+            var volup = transform.Find("volup/btn/Text");
+            if (volup != null)
+                volup.GetComponent<Text>().text = "音量+";
+            var voldown = transform.Find("voldown/btn/Text");
+            if (voldown != null)
+                voldown.GetComponent<Text>().text = "音量-";
+            var trigtip = transform.Find("triggertip/btn/Text");
+            if (trigtip != null)
+                trigtip.GetComponent<Text>().text = "トリガー";
         }
 
-        if (currentDevice == ControllerDevice.Goblin1)
-        {
-            trigger.SetActive(false);
-            app.transform.localPosition = new Vector3(185,460,0);
-            home.transform.localPosition = new Vector3(185,-80,0);
-        }
-        if (currentDevice == ControllerDevice.Goblin2)
-        {
-            trigger.SetActive(true);
-            app.transform.localPosition = new Vector3(185, -79, 0);
-            home.transform.localPosition = new Vector3(185, -238, 0);
-        }
+
     }
     void OnApplicationPause(bool pause)
     {
-        if (!pause)
-        {
-            if (currentDevice == ControllerDevice.Goblin1)
-            {
-                trigger.SetActive(false);
-                app.transform.localPosition = new Vector3(185, 460, 0);
-                home.transform.localPosition = new Vector3(185, -80, 0);
-            }
-            if (currentDevice == ControllerDevice.Goblin2)
-            {
-                trigger.SetActive(true);
-                app.transform.localPosition = new Vector3(185, -79, 0);
-                home.transform.localPosition = new Vector3(185, -238, 0);
-            }
-        }
+        
     }
 
     void Update()
@@ -122,7 +133,7 @@ public class Pvr_ToolTips : MonoBehaviour
         switch (currentDevice)
         {
             case Pvr_UnitySDKAPI.ControllerDevice.Goblin1:
-            case Pvr_UnitySDKAPI.ControllerDevice.Goblin2:
+            case Pvr_UnitySDKAPI.ControllerDevice.G2:
                 {
                     tipsAlpha = (330 - transform.parent.parent.parent.localRotation.eulerAngles.x) / 45.0f;
                     if (transform.parent.parent.parent.localRotation.eulerAngles.x >= 270 &&
@@ -137,6 +148,22 @@ public class Pvr_ToolTips : MonoBehaviour
                     }
                     GetComponent<CanvasGroup>().alpha = tipsAlpha;
 
+                }
+                break;
+            case Pvr_UnitySDKAPI.ControllerDevice.Neo2:
+                {
+                    tipsAlpha = (330 - transform.parent.parent.parent.localRotation.eulerAngles.x) / 45.0f;
+                    if (transform.parent.parent.parent.localRotation.eulerAngles.x >= 270 &&
+                        transform.parent.parent.parent.localRotation.eulerAngles.x <= 330)
+                    {
+                        tipsAlpha = Mathf.Max(0.0f, tipsAlpha);
+                        tipsAlpha = tipsAlpha > 1.0f ? 1.0f : tipsAlpha;
+                    }
+                    else
+                    {
+                        tipsAlpha = 0.0f;
+                    }
+                    GetComponent<CanvasGroup>().alpha = tipsAlpha;
                 }
                 break;
         }

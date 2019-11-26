@@ -175,16 +175,12 @@ public class Pvr_UIPointer : MonoBehaviour
         pointerClicked = false;
         lastPointerPressState = false;
         lastPointerClickState = false;
-        beamEnabledState = false;
-
+        beamEnabledState = false;        
     }
 
     protected virtual void OnDisable()
     {
-        if (cachedVRInputModule && cachedVRInputModule.pointers.Contains(this))
-        {
-            cachedVRInputModule.pointers.Remove(this);
-        }
+        Pvr_InputModule.RemovePoint(this);
     }
 
     protected virtual void ConfigureEventSystem()
@@ -205,12 +201,9 @@ public class Pvr_UIPointer : MonoBehaviour
             {
                 pointerEventData = new PointerEventData(cachedEventSystem);
             }
-
-            if (!cachedVRInputModule.pointers.Contains(this))
-            {
-                cachedVRInputModule.pointers.Add(this);
-            }
         }
+
+        Pvr_InputModule.AddPoint(this);
     }
 
 }

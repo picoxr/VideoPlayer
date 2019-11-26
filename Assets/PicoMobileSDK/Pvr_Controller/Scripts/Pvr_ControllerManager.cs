@@ -55,6 +55,7 @@ public class Pvr_ControllerManager : MonoBehaviour
     private DateTime beginDT;
     private DateTime endDT;
     public bool LengthAdaptiveRay;
+    private float rtime = 1.0f;
     #endregion
 
     //Service Start Success
@@ -69,6 +70,9 @@ public class Pvr_ControllerManager : MonoBehaviour
     //Master control hand change
     public delegate void ChangeMainControllerCallBack(string index);
     public static event ChangeMainControllerCallBack ChangeMainControllerCallBackEvent;
+    //HandNess Changed
+    public delegate void ChangeHandNessCallBack(string index);
+    public static event ChangeHandNessCallBack ChangeHandNessCallBackEvent;
 
 
     //The following is the separation of platform events, suggesting the use of the above events.
@@ -147,7 +151,7 @@ public class Pvr_ControllerManager : MonoBehaviour
     {
         localanguage = Application.systemLanguage;
 
-        if (controllerlink.trackingmode != 2 && controllerlink.trackingmode != 3)
+        if (controllerlink.trackingmode < 2)
         {
             Invoke("CheckControllerService", 10.0f);
         }
@@ -170,24 +174,34 @@ public class Pvr_ControllerManager : MonoBehaviour
                 
                 var key0 = controllerlink.GetCvControllerKeyData(0);
                 controllerlink.Controller0.TouchPadPosition = new Vector2(key0[0], key0[1]);
-                
+
+                var keyleft = controllerlink.GetCV2ControllerKeyData(0);
+
                 SetSwipeData(controllerlink.Controller0);
                 
                 SetTouchPadClick(controllerlink.Controller0);
                
-                TransformData(controllerlink.Controller0.HomeKey, key0[2]);
+                TransformData(controllerlink.Controller0.Home, key0[2]);
+
+                TransformData(controllerlink.Controller0.App, key0[3]);
                 
-                TransformData(controllerlink.Controller0.AppKey, key0[3]);
-                
-                TransformData(controllerlink.Controller0.TouchKey, key0[4]);
+                TransformData(controllerlink.Controller0.Touch, key0[4]);
               
-                TransformData(controllerlink.Controller0.VolumeUpKey, key0[5]);
+                TransformData(controllerlink.Controller0.VolumeUp, key0[5]);
               
-                TransformData(controllerlink.Controller0.VolumeDownKey, key0[6]);
-               
+                TransformData(controllerlink.Controller0.VolumeDown, key0[6]);
+
+                TransformData(controllerlink.Controller0.X, keyleft[0]);
+
+                TransformData(controllerlink.Controller0.Y, keyleft[1]);
+
+                //TransformData(controllerlink.Controller0.Left, keyleft[2]);
+
+                TransformData(controllerlink.Controller0.Left, keyleft[3]);
+
                 controllerlink.Controller0.TriggerNum = key0[7];
                 
-                SetTriggerClick(controllerlink.Controller0.TriggerKey, key0[7]);
+                SetTriggerClick(controllerlink.Controller0.Trigger, key0[7]);
                 
                 controllerlink.Controller0.Battery = key0[8];
             }
@@ -200,23 +214,33 @@ public class Pvr_ControllerManager : MonoBehaviour
                 var key1 = controllerlink.GetCvControllerKeyData(1);
                 controllerlink.Controller1.TouchPadPosition = new Vector2(key1[0], key1[1]);
                 
+                var keyright = controllerlink.GetCV2ControllerKeyData(1);
+
                 SetSwipeData(controllerlink.Controller1);
              
                 SetTouchPadClick(controllerlink.Controller1);
              
-                TransformData(controllerlink.Controller1.HomeKey, key1[2]);
+                TransformData(controllerlink.Controller1.Home, key1[2]);
               
-                TransformData(controllerlink.Controller1.AppKey, key1[3]);
+                TransformData(controllerlink.Controller1.App, key1[3]);
               
-                TransformData(controllerlink.Controller1.TouchKey, key1[4]);
+                TransformData(controllerlink.Controller1.Touch, key1[4]);
                 
-                TransformData(controllerlink.Controller1.VolumeUpKey, key1[5]);
+                TransformData(controllerlink.Controller1.VolumeUp, key1[5]);
                 
-                TransformData(controllerlink.Controller1.VolumeDownKey, key1[6]);
-                
+                TransformData(controllerlink.Controller1.VolumeDown, key1[6]);
+
+                TransformData(controllerlink.Controller1.A, keyright[0]);
+
+                TransformData(controllerlink.Controller1.B, keyright[1]);
+
+                TransformData(controllerlink.Controller1.Right, keyright[2]);
+
+                //TransformData(controllerlink.Controller1.Right, keyright[3]);
+
                 controllerlink.Controller1.TriggerNum = key1[7];
                 
-                SetTriggerClick(controllerlink.Controller1.TriggerKey, key1[7]);
+                SetTriggerClick(controllerlink.Controller1.Trigger, key1[7]);
                
                 controllerlink.Controller1.Battery = key1[8];
             }
@@ -240,19 +264,19 @@ public class Pvr_ControllerManager : MonoBehaviour
             
             SetTouchPadClick(controllerlink.Controller0);
             
-            TransformData(controllerlink.Controller0.HomeKey, Convert.ToInt16(jkey[2].ToString()));
+            TransformData(controllerlink.Controller0.Home, Convert.ToInt16(jkey[2].ToString()));
             
-            TransformData(controllerlink.Controller0.AppKey, Convert.ToInt16(jkey[3].ToString()));
+            TransformData(controllerlink.Controller0.App, Convert.ToInt16(jkey[3].ToString()));
             
-            TransformData(controllerlink.Controller0.TouchKey, Convert.ToInt16(jkey[4].ToString()));
+            TransformData(controllerlink.Controller0.Touch, Convert.ToInt16(jkey[4].ToString()));
            
-            TransformData(controllerlink.Controller0.VolumeUpKey, Convert.ToInt16(jkey[5].ToString()));
+            TransformData(controllerlink.Controller0.VolumeUp, Convert.ToInt16(jkey[5].ToString()));
             
-            TransformData(controllerlink.Controller0.VolumeDownKey, Convert.ToInt16(jkey[6].ToString()));
+            TransformData(controllerlink.Controller0.VolumeDown, Convert.ToInt16(jkey[6].ToString()));
             
             controllerlink.Controller0.Battery = Convert.ToInt16(jkey[7].ToString());
             
-            TransformData(controllerlink.Controller0.TriggerKey, controllerlink.GetTriggerKeyEvent());
+            TransformData(controllerlink.Controller0.Trigger, controllerlink.GetTriggerKeyEvent());
             
         }
         
@@ -261,25 +285,27 @@ public class Pvr_ControllerManager : MonoBehaviour
     }
     void OnApplicationQuit()
     {
-        var headdof = Pvr_UnitySDKManager.SDK.HeadDofNum == HeadDofNum.SixDof ? 1 : 0;
-        var handdof = Pvr_UnitySDKManager.SDK.HandDofNum == HandDofNum.SixDof ? 1 : 0;
+        var headdof = Pvr_UnitySDKManager.SDK.HmdOnlyrot ? 0 : 1;
+        var handdof = Pvr_UnitySDKManager.SDK.ControllerOnlyrot ? 0 : 1;
       
         if (controllerlink.neoserviceStarted)
         {
+            controllerlink.SetUnityVersionToJar(Pvr_UnitySDKAPI.System.UnitySDKVersion);
             controllerlink.StopControllerThread(headdof, handdof);
         }
             
     }
     private void OnApplicationPause(bool pause)
     {
-        var headdof = Pvr_UnitySDKManager.SDK.HeadDofNum == HeadDofNum.SixDof ? 1 : 0;
-        var handdof = Pvr_UnitySDKManager.SDK.HandDofNum == HandDofNum.SixDof ? 1 : 0;
+        var headdof = Pvr_UnitySDKManager.SDK.HmdOnlyrot ? 0 : 1;
+        var handdof = Pvr_UnitySDKManager.SDK.ControllerOnlyrot ? 0 : 1;
+        
         if (pause)
         {
-          
             if (controllerlink.neoserviceStarted)
             {
                 controllerlink.SetGameObjectToJar("");
+                controllerlink.SetUnityVersionToJar(Pvr_UnitySDKAPI.System.UnitySDKVersion);
                 controllerlink.StopControllerThread(headdof, handdof);
             }
             if(controllerlink.goblinserviceStarted)
@@ -495,8 +521,8 @@ public class Pvr_ControllerManager : MonoBehaviour
         else if (Convert.ToInt16(state) == 1)
         {
             controllerlink.neoserviceStarted = true;
-            var headdof = Pvr_UnitySDKManager.SDK.HeadDofNum == HeadDofNum.SixDof ? 1 : 0;
-            var handdof = Pvr_UnitySDKManager.SDK.HandDofNum == HandDofNum.SixDof ? 1 : 0;
+            var headdof = Pvr_UnitySDKManager.SDK.HmdOnlyrot ? 0 : 1;
+            var handdof = Pvr_UnitySDKManager.SDK.ControllerOnlyrot ? 0 : 1;
             controllerlink.StartControllerThread(headdof, handdof);
             if (SetControllerServiceBindStateEvent != null)
                 SetControllerServiceBindStateEvent();
@@ -525,28 +551,38 @@ public class Pvr_ControllerManager : MonoBehaviour
     public void setControllerStateChanged(string state)
     {
         PLOG.I("PvrLog CVControllerStateChanged" + state);
-        if (SetControllerStateChangedEvent != null)
-            SetControllerStateChangedEvent(state);
-        if (PvrControllerStateChangedEvent != null)
-            PvrControllerStateChangedEvent(state);
         
         int controller = Convert.ToInt16(state.Substring(0, 1));
         if (controller == 0)
         {
             controllerlink.controller0Connected = Convert.ToBoolean(Convert.ToInt16(state.Substring(2, 1)));
             if (!controllerlink.controller0Connected)
+            {
                 controllerlink.Controller0 = new ControllerHand();
+                controllerlink.Controller0.Position = new Vector3(-0.1f, -0.3f, 0.3f);
+            }
+                
         }
         else
         {
             controllerlink.controller1Connected = Convert.ToBoolean(Convert.ToInt16(state.Substring(2, 1)));
             if (!controllerlink.controller1Connected)
+            {
                 controllerlink.Controller1 = new ControllerHand();
+                controllerlink.Controller1.Position = new Vector3(0.1f, -0.3f, 0.3f);
+            }   
         }
         if (Convert.ToBoolean(Convert.ToInt16(state.Substring(2, 1))))
-        {
+        { 
+            controllerlink.controllerType = controllerlink.GetDeviceType();
             controllerlink.ResetController(controller);
         }
+        if (SetControllerStateChangedEvent != null)
+            SetControllerStateChangedEvent(state);
+        if (PvrControllerStateChangedEvent != null)
+            PvrControllerStateChangedEvent(state);
+
+        controllerlink.mainHandID = Controller.UPvr_GetMainHandNess();
     }
  
     public void setControllerAbility(string data)
@@ -564,6 +600,8 @@ public class Pvr_ControllerManager : MonoBehaviour
     public void controllerThreadStartedCallback()
     {
         PLOG.I("PvrLog ThreadStartSuccess");
+
+        controllerlink.SetUnityVersionToJar(Pvr_UnitySDKAPI.System.UnitySDKVersion); 
         GetCVControllerState();
         if (ControllerThreadStartedCallbackEvent != null)
             ControllerThreadStartedCallbackEvent();
@@ -715,6 +753,15 @@ public class Pvr_ControllerManager : MonoBehaviour
         //index = 0/1
         if (ChangeMainControllerCallBackEvent != null)
             ChangeMainControllerCallBackEvent(index);
+
+        controllerlink.mainHandID = Convert.ToInt16(index);
+    }
+
+    public void changeHandnessCallback(string index)
+    {
+        PLOG.I("PvrLog changeHandnessCallback" + index);
+        if (ChangeHandNessCallBackEvent != null)
+            ChangeHandNessCallBackEvent(index);
     }
 
     private void ShowToast(int type)
@@ -730,10 +777,19 @@ public class Pvr_ControllerManager : MonoBehaviour
                         {
                             toast.text = "手柄服务未启动，请先启动手柄服务";
                         }
+                        else if (localanguage == SystemLanguage.Japanese)
+                        {
+                            toast.text = "コントローラーサービスは起動していません、先ずコントローラーサービスを起動してください";
+                        }
+                        else if (localanguage == SystemLanguage.Korean)
+                        {
+                            toast.text = "컨트롤러 서비스가 작동되지 않았습니다. 먼저 컨트롤러 서비스를 작동해 주십시오";
+                        }
                         else
                         {
                             toast.text = "No handle service found, please turnon the handle service first";
                         }
+                        
                         Invoke("HideToast", 5.0f);
                     }
                     break;
@@ -743,6 +799,14 @@ public class Pvr_ControllerManager : MonoBehaviour
                         if (localanguage == SystemLanguage.Chinese || localanguage == SystemLanguage.ChineseSimplified)
                         {
                             toast.text = "未发现手柄服务，请使用PicoVR下载并安装";
+                        }
+                        else if (localanguage == SystemLanguage.Japanese)
+                        {
+                            toast.text = "コントローラーサービスが見つかりませんでした、PicoVRでダウンロードしてください";
+                        }
+                        else if (localanguage == SystemLanguage.Korean)
+                        {
+                            toast.text = "컨트롤러 서비스가 발견되지 않았습니다. PicoVR을 사용하여 다운로드 및 설치해 주십시오";
                         }
                         else
                         {
@@ -757,6 +821,14 @@ public class Pvr_ControllerManager : MonoBehaviour
                         if (localanguage == SystemLanguage.Chinese || localanguage == SystemLanguage.ChineseSimplified)
                         {
                             toast.text = "没有扫描到手柄，请确保手机蓝牙开启，并短按手柄Home键";
+                        }
+                        else if (localanguage == SystemLanguage.Japanese)
+                        {
+                            toast.text = "コントローラーサービスは起動していません、先ずコントローラーサービスを起動してください";
+                        }
+                        else if (localanguage == SystemLanguage.Korean)
+                        {
+                            toast.text = "컨트롤러 서비스가 작동되지 않았습니다. 먼저 컨트롤러 서비스를 작동해 주십시오";
                         }
                         else
                         {
@@ -774,6 +846,14 @@ public class Pvr_ControllerManager : MonoBehaviour
                         {
                             toast.text = "扫描到多个手柄，请保持周围只有一个开启状态的手柄";
                         }
+                        else if (localanguage == SystemLanguage.Japanese)
+                        {
+                            toast.text = "コントローラーサービスは起動していません、先ずコントローラーサービスを起動してください";
+                        }
+                        else if (localanguage == SystemLanguage.Korean)
+                        {
+                            toast.text = "컨트롤러 서비스가 작동되지 않았습니다. 먼저 컨트롤러 서비스를 작동해 주십시오";
+                        }
                         else
                         {
                             toast.text = "Find more than one handle, turn off the unused handle";
@@ -788,6 +868,14 @@ public class Pvr_ControllerManager : MonoBehaviour
                         if (localanguage == SystemLanguage.Chinese || localanguage == SystemLanguage.ChineseSimplified)
                         {
                             toast.text = "手柄服务启动异常，请检查后台权限及安全设置";
+                        }
+                        else if (localanguage == SystemLanguage.Japanese)
+                        {
+                            toast.text = "コントローラーサービスは起動していません、先ずコントローラーサービスを起動してください";
+                        }
+                        else if (localanguage == SystemLanguage.Korean)
+                        {
+                            toast.text = "컨트롤러 서비스가 작동되지 않았습니다. 먼저 컨트롤러 서비스를 작동해 주십시오";
                         }
                         else
                         {
@@ -837,6 +925,13 @@ public class Pvr_ControllerManager : MonoBehaviour
                     Controller.UPvr_SetMainHandNess(1);
                 }
             }
+
+            if (controllerlink.controller0Connected || controllerlink.controller1Connected)
+            {
+                controllerlink.controllerType = controllerlink.GetDeviceType();
+            }
+
+            controllerlink.mainHandID = Controller.UPvr_GetMainHandNess();
         }
     }
 
@@ -844,85 +939,62 @@ public class Pvr_ControllerManager : MonoBehaviour
     {
         if (controllerlink.switchHomeKey)
         {
-            if (Pvr_UnitySDKManager.SDK.HeadDofNum == HeadDofNum.ThreeDof || Pvr_UnitySDKManager.SDK.SixDofRecenter)
+            if (Controller.UPvr_GetKeyLongPressed(0, Pvr_KeyCode.HOME) || Controller.UPvr_GetKeyLongPressed(1, Pvr_KeyCode.HOME))
             {
-                if (Controller.UPvr_GetKeyLongPressed(0, Pvr_KeyCode.HOME))
+                if (Pvr_UnitySDKManager.SDK.IsViewerLogicFlow)
                 {
-                    if (Pvr_UnitySDKManager.SDK.IsViewerLogicFlow)
+                    Pvr_UnitySDKManager.pvr_UnitySDKSensor.ResetUnitySDKSensorAll();
+                }
+                else
+                {
+                    if (Pvr_UnitySDKManager.SDK.HmdOnlyrot)
                     {
-                        Pvr_UnitySDKManager.pvr_UnitySDKSensor.ResetUnitySDKSensorAll();
+                        Pvr_UnitySDKManager.pvr_UnitySDKSensor.OptionalResetUnitySDKSensor(1, 0);
                     }
                     else
                     {
-                        if (Pvr_UnitySDKManager.SDK.safeToast.activeSelf)
+                        if (controllerlink.trackingmode == 4)
                         {
-                            Pvr_UnitySDKManager.SDK.safeToast.SetActive(false);
                             Pvr_UnitySDKManager.pvr_UnitySDKSensor.OptionalResetUnitySDKSensor(1, 1);
                         }
                         else
                         {
-                            Pvr_UnitySDKManager.pvr_UnitySDKSensor.OptionalResetUnitySDKSensor(1, 0);
-                        }
-                        if (Pvr_UnitySDKManager.SDK.HeadDofNum == HeadDofNum.SixDof && Pvr_UnitySDKManager.SDK.SixDofRecenter)
-                        {
+                            if (Pvr_UnitySDKManager.SDK.safeToast.activeSelf)
+                            {
+                                Pvr_UnitySDKManager.SDK.safeToast.SetActive(false);
+                                Pvr_UnitySDKManager.pvr_UnitySDKSensor.OptionalResetUnitySDKSensor(1, 1);
+                            }
+                            else
+                            {
+                                Pvr_UnitySDKManager.pvr_UnitySDKSensor.OptionalResetUnitySDKSensor(1, 0);
+                            }
                             controllerlink.ResetHeadSensorForController();
                         }
                     }
-                    ResetController(0);
-                }
-                if (Controller.UPvr_GetKeyLongPressed(1, Pvr_KeyCode.HOME))
-                {
-                    if (Pvr_UnitySDKManager.SDK.IsViewerLogicFlow)
+                    if (Pvr_UnitySDKManager.SDK.ControllerOnlyrot || controllerlink.controller0Connected && Controller.UPvr_GetControllerPOS(0).Equals(Vector3.zero) || controllerlink.controller1Connected && Controller.UPvr_GetControllerPOS(1).Equals(Vector3.zero))
                     {
-                        Pvr_UnitySDKManager.pvr_UnitySDKSensor.ResetUnitySDKSensorAll();
+                        if(Controller.UPvr_GetKeyLongPressed(0, Pvr_KeyCode.HOME))
+                            ResetController(0);
+                        if(Controller.UPvr_GetKeyLongPressed(1, Pvr_KeyCode.HOME))
+                            ResetController(1);
                     }
-                    else
-                    {
-                        if (Pvr_UnitySDKManager.SDK.safeToast.activeSelf)
-                        {
-                            Pvr_UnitySDKManager.SDK.safeToast.SetActive(false);
-                            Pvr_UnitySDKManager.pvr_UnitySDKSensor.OptionalResetUnitySDKSensor(1, 1);
-                        }
-                        else
-                        {
-                            Pvr_UnitySDKManager.pvr_UnitySDKSensor.OptionalResetUnitySDKSensor(1, 0);
-                        }
-                        if (Pvr_UnitySDKManager.SDK.HeadDofNum == HeadDofNum.SixDof && Pvr_UnitySDKManager.SDK.SixDofRecenter)
-                        {
-                            controllerlink.ResetHeadSensorForController();
-                        }
-                    }
-                    ResetController(1);
-                }
-            }
-            else
-            {
-                if (Controller.UPvr_GetKeyLongPressed(0, Pvr_KeyCode.HOME))
-                {
-                    ResetController(0);
-                }
-                if (Controller.UPvr_GetKeyLongPressed(1, Pvr_KeyCode.HOME))
-                {
-                    ResetController(1);
                 }
             }
         }
-        
-        
         if (controllerlink.picoDevice)
         {
             if (controllerlink.switchHomeKey)
             {
-                if (!controllerlink.Controller0.HomeKey.LongPressedClock && Controller.UPvr_GetKeyUp(0, Pvr_KeyCode.HOME) || !controllerlink.Controller1.HomeKey.LongPressedClock && Controller.UPvr_GetKeyUp(1, Pvr_KeyCode.HOME) && !stopConnect)
+                if (!controllerlink.Controller0.Home.LongPressedClock && Controller.UPvr_GetKeyUp(0, Pvr_KeyCode.HOME) || !controllerlink.Controller1.Home.LongPressedClock && Controller.UPvr_GetKeyUp(1, Pvr_KeyCode.HOME) && !stopConnect)
                 {
                     controllerlink.RebackToLauncher();
                 }
             }
-            if (!controllerlink.Controller0.VolumeUpKey.LongPressedClock && Controller.UPvr_GetKeyUp(0, Pvr_KeyCode.VOLUMEUP) || !controllerlink.Controller1.VolumeUpKey.LongPressedClock && Controller.UPvr_GetKeyUp(1, Pvr_KeyCode.VOLUMEUP))
+            if (!controllerlink.Controller0.VolumeUp.LongPressedClock && Controller.UPvr_GetKeyUp(0, Pvr_KeyCode.VOLUMEUP) || !controllerlink.Controller1.VolumeUp.LongPressedClock && Controller.UPvr_GetKeyUp(1, Pvr_KeyCode.VOLUMEUP))
             {
                 controllerlink.TurnUpVolume();
             }
-            if (!controllerlink.Controller0.VolumeDownKey.LongPressedClock && Controller.UPvr_GetKeyUp(0, Pvr_KeyCode.VOLUMEDOWN) || !controllerlink.Controller1.VolumeDownKey.LongPressedClock && Controller.UPvr_GetKeyUp(1, Pvr_KeyCode.VOLUMEDOWN))
+            if (!controllerlink.Controller0.VolumeDown.LongPressedClock && Controller.UPvr_GetKeyUp(0, Pvr_KeyCode.VOLUMEDOWN) || !controllerlink.Controller1.VolumeDown.LongPressedClock && Controller.UPvr_GetKeyUp(1, Pvr_KeyCode.VOLUMEDOWN))
             {
                 controllerlink.TurnDownVolume();
             }
@@ -967,63 +1039,159 @@ public class Pvr_ControllerManager : MonoBehaviour
 
     private void SetSwipeData(ControllerHand hand)
     {
-        if (hand.TouchPadPosition != Vector2.zero)
+        if (controllerlink.controllerType == 4)
         {
-            if (!hand.touchClock)
+            if (hand.TouchPadPosition != new Vector2(128, 128))
             {
-                beginDT = DateTime.UtcNow;
-                
-                hand.touchDownPosition = hand.TouchPadPosition;
-                hand.touchClock = true;
-            }
-            hand.touchUpPosition = hand.TouchPadPosition;
-        }
-        else
-        {
-            endDT = DateTime.UtcNow;
-            TimeSpan ts = endDT - beginDT;
-            if (Convert.ToInt64(ts.TotalMilliseconds) <= 270)
-            {
-                hand.swipeData = hand.touchUpPosition - hand.touchDownPosition;
-
-                if (Mathf.Abs(hand.swipeData.x) > 10 && Mathf.Abs(hand.swipeData.y) > 10)
+                if (!hand.touchClock)
                 {
-                    if (hand.swipeData.y / hand.swipeData.x >= 1.732)
+                    beginDT = DateTime.UtcNow;
+                    hand.touchDownPosition = hand.TouchPadPosition;
+                    hand.touchClock = true;
+                }
+
+                hand.touchUpPosition = hand.TouchPadPosition;
+                if (hand.touchUpPosition.y >= 225)
+                {
+                    hand.SwipeDirectionState = SwipeDirection.SwipeRight;
+                    hand.rockerState = true;
+                }
+                else if (hand.touchUpPosition.y <= 30)
+                {
+                    hand.SwipeDirectionState = SwipeDirection.SwipeLeft;
+                    hand.rockerState = true;
+                }
+                else if (hand.touchUpPosition.x >= 225)
+                {
+                    hand.SwipeDirectionState = SwipeDirection.SwipeUp;
+                    hand.rockerState = true;
+                }
+                else if (hand.touchUpPosition.x <= 30)
+                {
+                    hand.SwipeDirectionState = SwipeDirection.SwipeDown;
+                    hand.rockerState = true;
+                }
+                else
+                {
+                    if (!hand.rockerState)
                     {
-                        hand.isVertical = false;
-                        hand.isHorizontal = true;
+                        hand.SwipeDirectionState = SwipeDirection.No;
+                    }
+                }
+                rtime -= Time.deltaTime;
+                if (rtime <= 0)
+                {
+                    rtime = 0.5f;
+                    if (hand.touchUpPosition.y >= 225)
+                    {
+                        hand.SwipeDirection = SwipeDirection.SwipeRight;
+                    }
+                    else if (hand.touchUpPosition.y <= 30)
+                    {
+                        hand.SwipeDirection = SwipeDirection.SwipeLeft;
+                    }
+                    else if (hand.touchUpPosition.x >= 225)
+                    {
+                        hand.SwipeDirection = SwipeDirection.SwipeUp;
+                    }
+                    else if (hand.touchUpPosition.x <= 30)
+                    {
+                        hand.SwipeDirection = SwipeDirection.SwipeDown;
                     }
                     else
                     {
-                        hand.isVertical = true;
-                        hand.isHorizontal = false;
+                        hand.SwipeDirection = SwipeDirection.No;
                     }
-                }
-                if (hand.swipeData.x > 0f && hand.isVertical)
-                {
-                    hand.SwipeDirection = SwipeDirection.SwipeUp;
-                }
-                else if (hand.swipeData.x < 0f && hand.isVertical)
-                {
-                    hand.SwipeDirection = SwipeDirection.SwipeDown;
-                }
-                else if (hand.swipeData.y > 0f && hand.isHorizontal)
-                {
-                    hand.SwipeDirection = SwipeDirection.SwipeRight;
-                }
-                else if (hand.swipeData.y < 0f && hand.isHorizontal)
-                {
-                    hand.SwipeDirection = SwipeDirection.SwipeLeft;
                 }
                 else
                 {
                     hand.SwipeDirection = SwipeDirection.No;
                 }
             }
-            beginDT = DateTime.UtcNow;
-            hand.touchDownPosition = Vector2.zero;
-            hand.touchUpPosition = Vector2.zero;
-            hand.touchClock = false;
+            else
+            {
+                endDT = DateTime.UtcNow;
+                TimeSpan ts = endDT - beginDT;
+                if (Convert.ToInt64(ts.TotalMilliseconds) <= 500)
+                {
+                    if (hand.touchDownPosition != new Vector2(128, 128))
+                    {
+                        hand.SwipeDirection = hand.SwipeDirectionState;
+                    }
+                    else
+                    {
+                        hand.SwipeDirection = SwipeDirection.No;
+                    }
+                }
+
+                rtime = 1.0f;
+                beginDT = DateTime.UtcNow;
+                hand.touchDownPosition = new Vector2(128,128);
+                hand.touchUpPosition = new Vector2(128, 128);
+                hand.touchClock = false;
+                hand.rockerState = false;
+            }
+        }
+        else
+        {
+            if (hand.TouchPadPosition != Vector2.zero)
+            {
+                if (!hand.touchClock)
+                {
+                    beginDT = DateTime.UtcNow;
+
+                    hand.touchDownPosition = hand.TouchPadPosition;
+                    hand.touchClock = true;
+                }
+                hand.touchUpPosition = hand.TouchPadPosition;
+            }
+            else
+            {
+                endDT = DateTime.UtcNow;
+                TimeSpan ts = endDT - beginDT;
+                if (Convert.ToInt64(ts.TotalMilliseconds) <= 270)
+                {
+                    hand.swipeData = hand.touchUpPosition - hand.touchDownPosition;
+
+                    if (Mathf.Abs(hand.swipeData.x) > 10 && Mathf.Abs(hand.swipeData.y) > 10)
+                    {
+                        if (hand.swipeData.y / hand.swipeData.x >= 1.732)
+                        {
+                            hand.isVertical = false;
+                            hand.isHorizontal = true;
+                        }
+                        else
+                        {
+                            hand.isVertical = true;
+                            hand.isHorizontal = false;
+                        }
+                    }
+                    if (hand.swipeData.x > 0f && hand.isVertical)
+                    {
+                        hand.SwipeDirection = SwipeDirection.SwipeUp;
+                    }
+                    else if (hand.swipeData.x < 0f && hand.isVertical)
+                    {
+                        hand.SwipeDirection = SwipeDirection.SwipeDown;
+                    }
+                    else if (hand.swipeData.y > 0f && hand.isHorizontal)
+                    {
+                        hand.SwipeDirection = SwipeDirection.SwipeRight;
+                    }
+                    else if (hand.swipeData.y < 0f && hand.isHorizontal)
+                    {
+                        hand.SwipeDirection = SwipeDirection.SwipeLeft;
+                    }
+                    else
+                    {
+                        hand.SwipeDirection = SwipeDirection.No;
+                    }
+                }
+                beginDT = DateTime.UtcNow;
+                hand.touchDownPosition = Vector2.zero;
+                hand.touchUpPosition = Vector2.zero;
+                hand.touchClock = false;
+            }
         }
     }
 
@@ -1073,7 +1241,7 @@ public class Pvr_ControllerManager : MonoBehaviour
 
     private void SetTouchPadClick(ControllerHand hand)
     {
-        if (hand.TouchKey.State)
+        if (hand.Touch.State)
         {
             if (hand.TouchPadPosition.x <= 255 && hand.TouchPadPosition.x >= 127f + 63.5f * Mathf.Sin(45) &&
                 hand.TouchPadPosition.y <= 127f + 63.5f * Mathf.Sin(45) &&
@@ -1152,6 +1320,7 @@ public class Pvr_ControllerManager : MonoBehaviour
             key.LongPressed = false;
         }
     }
+
 
     #endregion
 
