@@ -15,20 +15,40 @@ public class Pvr_VolumePowerBrightness : MonoBehaviour
     public string MusicPath;
     #endregion
 
+    void Awake()
+    {
+        InitBatteryVolClass();
+        string gameobjName = this.gameObject.name;
+        StartBatteryReceiver(gameobjName);
+        StartAudioReceiver(gameobjName);
+    }
+
+    void OnDisable()
+    {
+        if (VolEnable)
+        {
+            StopAudioReceiver();
+        }
+        if (BattEnable)
+        {
+            StopBatteryReceiver();
+        }
+    }
+
     /************************************   Public Interfaces   **********************************/
     #region Public Interfaces
     public void GetMaxVolumeNumber()
     {
         int maxVolume = 0;
         maxVolume = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_GetMaxVolumeNumber();
-        showResult.text = "最大音量: " + maxVolume.ToString();
+        showResult.text = "Maximum volume: " + maxVolume.ToString();
     }
 
     public void GetCurrentVolumeNumber()
     {
         int currVolume = 0;
         currVolume = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_GetCurrentVolumeNumber();
-        showResult.text = "当前音量：" + currVolume.ToString();
+        showResult.text = "Current volume：" + currVolume.ToString();
     }
 
     public void VolumeUp()
@@ -37,7 +57,7 @@ public class Pvr_VolumePowerBrightness : MonoBehaviour
         enable = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_VolumeUp();
         if (!enable)
         {
-            Debug.LogError("VolumeUp Error");
+            PLOG.E("VolumeUp Error");
         }
     }
 
@@ -47,7 +67,7 @@ public class Pvr_VolumePowerBrightness : MonoBehaviour
         enable = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_VolumeDown();
         if (!enable)
         {
-            Debug.LogError("VolumeDown Error");
+            PLOG.E("VolumeDown Error");
         }
     }
 
@@ -56,11 +76,11 @@ public class Pvr_VolumePowerBrightness : MonoBehaviour
         bool enable = false;
         System.Random rm = new System.Random();
         int volume = rm.Next(0, 15);
-        setVolumnum.text = "随机数：" + volume.ToString();
+        setVolumnum.text = "Random number：" + volume.ToString();
         enable = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_SetVolumeNum(volume);
         if (!enable)
         {
-            Debug.LogError("SetVolumeNum Error");
+            PLOG.E("SetVolumeNum Error");
         }
     }
 
@@ -69,12 +89,12 @@ public class Pvr_VolumePowerBrightness : MonoBehaviour
         bool enable = false;
         System.Random rm = new System.Random();
         int brightness = rm.Next(0, 255);
-        setBrightnum.text = "随机数：" + brightness.ToString();
+        setBrightnum.text = "Random number：" + brightness.ToString();
         enable = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_SetCommonBrightness(brightness);
 
         if (!enable)
         {
-            Debug.LogError("SetBrightness Error");
+            PLOG.E("SetBrightness Error");
         }
     }
 
@@ -83,19 +103,19 @@ public class Pvr_VolumePowerBrightness : MonoBehaviour
         int lightness = 0;
         lightness = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_GetCommonBrightness();
 
-        showResult.text = "当前亮度：" + lightness.ToString();
+        showResult.text = "Current brightness：" + lightness.ToString();
     }
 
     public bool setAudio(string s)
     {
-        Debug.Log(s.ToString());
+        PLOG.I(s.ToString());
         // do what you want !
         return true;
     }
 
     public bool setBattery(string s)
     {
-        Debug.Log(s.ToString());
+        PLOG.I(s.ToString());
         // do what you want !
         return true;
     }
@@ -131,35 +151,5 @@ public class Pvr_VolumePowerBrightness : MonoBehaviour
         return Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_StopAudioReceiver();
     }
 
-    #endregion
-
-    /************************************     MonoBehaviour     **********************************/
-    #region Unity API
-    void Start()
-    {
-    }
-
-    void Awake()
-    {
-
-        InitBatteryVolClass();
-        string gameobjName = this.gameObject.name;
-        StartBatteryReceiver(gameobjName);
-        StartAudioReceiver(gameobjName);
-
-    }
-
-    void OnDisable()
-    {
-        if (VolEnable)
-        {
-            StopAudioReceiver();
-        }
-        if (BattEnable)
-        {
-            StopBatteryReceiver();
-        }
-
-    }
     #endregion
 }

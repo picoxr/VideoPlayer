@@ -1,13 +1,6 @@
-#if !UNITY_EDITOR
-#if UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID 
 #define ANDROID_DEVICE
-#elif UNITY_IPHONE
-#define IOS_DEVICE
-#elif UNITY_STANDALONE_WIN
-#define WIN_DEVICE
 #endif
-#endif
-
 
 using System;
 using System.Runtime.InteropServices;
@@ -21,8 +14,8 @@ namespace Pvr_UnitySDKAPI
         EYE_TEXTURE_RESOLUTION1,
         SEENSOR_COUNT,
         ABILITY6DOF,
-        PLATFORM_TYPE, //0 phone，1 Pico Neo，2 Goblin
-        TRACKING_MODE, // 0-default 1-hb 2-cv 3-hb+cv
+        PLATFORM_TYPE,
+        TRACKING_MODE, 
         LOG_LEVEL,
         ENBLE_HAND6DOF_BY_HEAD,
         ENBLE_6DOF_GLOBAL_TRACKING,
@@ -34,12 +27,15 @@ namespace Pvr_UnitySDKAPI
         EYE_TEXTURE_RES_NORMAL,
         iCtrlModelLoadingPri,
         iPhoneHMDModeEnabled,
+        isEnableBoundary,
+
     };
 
     public enum GlobalFloatConfigs
     {
         IPD,
-        FOV,
+        VFOV,
+        HFOV,
         NECK_MODEL_X,
         NECK_MODEL_Y,
         NECK_MODEL_Z,
@@ -85,31 +81,52 @@ namespace Pvr_UnitySDKAPI
     public enum Eye
     {
         LeftEye = 0,
-        RightEye
+        RightEye,
+        BothEye
     }
 
-    public enum HeadDofNum
+    public enum ResUtilsType
     {
-        ThreeDof,
-        SixDof
+        TYPE_TEXTSIZE = 0,
+        TYPE_COLOR = 1,
+        TYPE_TEXT = 2,
+        TYPE_FONT = 3,
+        TYPE_VALUE = 4,
+        TYPE_DRAWABLE = 5,
+        TYPE_OBJECT = 6,
+        TYPR_OBJECTARRAY = 7,
     }
 
-    public enum HandDofNum
-    {
-        ThreeDof,
-        SixDof
-    }
-
-    public enum HandNum
-    {
-        One,
-        Two
-    }
-
+    /// <summary>
+    /// Device Tracking Origin
+    ///     Represents how the SDK is reporting pose data
+    /// 
+    /// EyeLevel:
+    ///     Represents the tracking origin whereby (0,0,0) is on the "eye"(virtual camera).
+    ///     This means that pose data returned in this mode will not include the user height.
+    /// 
+    /// FloorLevel:
+    ///     Represents the tracking origin whereby (0,0,0) is on the "floor" or other surface detected by Device.
+    ///     This means that pose data returned in this mode will include the height that user defined.
+    /// </summary>
     public enum TrackingOrigin
     {
         EyeLevel,
         FloorLevel
+    }
+
+    public enum EFoveationLevel
+    {
+        None = -1,
+        Low = 0,
+        Med = 1,
+        High = 2
+    }
+
+    public enum StereoRenderingPathPico
+    {
+        MultiPass,
+        SinglePass,
     }
 
     #region EyeTracking 
@@ -154,6 +171,25 @@ namespace Pvr_UnitySDKAPI
         public Vector3 rightEyePositionGuide;   //!< Position of the inner corner of the right eye in meters from the HMD center-eye coordinate system's origin.
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
         public byte[] reserved;               //!< reserved
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct EyeTrackingGazeRay
+    {
+        /// <summary>
+        /// Vector in world space with the gaze direction.
+        /// </summary>
+        public Vector3 Direction;
+
+        /// <summary>
+        /// IsValid is true when there is available gaze data.
+        /// </summary>
+        public bool IsValid;
+
+        /// <summary>
+        /// The middle of the eyes in world space.
+        /// </summary>
+        public Vector3 Origin;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -223,7 +259,7 @@ namespace Pvr_UnitySDKAPI
         private static extern int Pvr_GetSensorState(int index, ref float x, ref float y, ref float z, ref float w, ref float px, ref float py, ref float pz);
 
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int Pvr_GetMainSensorState(ref float x, ref float y, ref float z, ref float w, ref float px, ref float py, ref float pz, ref float fov, ref int viewNumber);
+        private static extern int Pvr_GetMainSensorState(ref float x, ref float y, ref float z, ref float w, ref float px, ref float py, ref float pz, ref float vfov,ref float hfov, ref int viewNumber);
 
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
         private static extern int Pvr_GetPsensorState();
@@ -245,6 +281,12 @@ namespace Pvr_UnitySDKAPI
 
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
         private static extern bool Pvr_Get6DofSafePanelFlag();
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void Pvr_SetReinPosition(float x, float y, float z,float w, float px,float py,float pz, int hand, bool valid, int key);
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool Pvr_SetTrackingOriginType(TrackingOrigin trackingOriginType);
 #endif
 
 
@@ -348,10 +390,10 @@ namespace Pvr_UnitySDKAPI
             return 0;
 #endif
         }
-        public static int UPvr_GetMainSensorState(ref float x, ref float y, ref float z, ref float w, ref float px, ref float py, ref float pz, ref float fov, ref int viewNumber)
+        public static int UPvr_GetMainSensorState(ref float x, ref float y, ref float z, ref float w, ref float px, ref float py, ref float pz, ref float vfov, ref float hfov, ref int viewNumber)
         {
 #if ANDROID_DEVICE
-            return Pvr_GetMainSensorState(ref x, ref y, ref z, ref w, ref px, ref py, ref pz, ref fov, ref viewNumber);
+            return Pvr_GetMainSensorState(ref x, ref y, ref z, ref w, ref px, ref py, ref pz, ref vfov,ref hfov, ref viewNumber);
 #else
             return 0;
 #endif
@@ -383,6 +425,7 @@ namespace Pvr_UnitySDKAPI
             return 0;
 #endif
         }
+
         public static int UPvr_Get6DofSensorQualityStatus()
         {
 #if ANDROID_DEVICE
@@ -391,6 +434,7 @@ namespace Pvr_UnitySDKAPI
             return 0;
 #endif
         }
+
         public static int UPvr_Enable6DofModule(bool enable)
         {
 #if ANDROID_DEVICE
@@ -407,13 +451,20 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E("Error :" + e.ToString());
             }
 #endif
         }
 
         public static bool Pvr_IsHead6dofReset()
         {
+            int value = 0;
+            Render.UPvr_GetIntConfig((int)GlobalIntConfigs.isEnableBoundary, ref value);
+            if (value > 0)
+            {
+                return false;
+            }
+                
             bool state = false;
 #if ANDROID_DEVICE
             try
@@ -422,7 +473,7 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E("Error :" + e.ToString());
             }
 #endif
             return state;
@@ -438,7 +489,7 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E("Error :" + e.ToString());
             }
 #endif
             return psensor;
@@ -452,7 +503,7 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E("Error :" + e.ToString());
             }
 #endif
         }
@@ -463,6 +514,23 @@ namespace Pvr_UnitySDKAPI
 #endif
             return 0;
         }
+
+        public static void UPvr_SetReinPosition( float x, float y, float z,float w,float px, float py,float pz, int hand, bool valid, int key)
+        {
+            PLOG.D("PvrLog UPvr_SetReinPosition" + x + y + z + w + px +py + pz + hand + valid + key);
+#if ANDROID_DEVICE
+            Pvr_SetReinPosition(x,y,z,w,px,py,pz,hand,valid,key);
+#endif
+        }
+
+        public static bool UPvr_SetTrackingOriginType(TrackingOrigin trackingOriginType)
+        {
+            bool ret = true;
+#if ANDROID_DEVICE
+            ret = Pvr_SetTrackingOriginType(trackingOriginType);
+#endif
+            return ret;
+        }
         #endregion
 
     }
@@ -471,10 +539,6 @@ namespace Pvr_UnitySDKAPI
     public struct Render
     {
 #if ANDROID_DEVICE
-        public const string LibFileName = "Pvr_UnitySDK";
-#elif IOS_DEVICE
-		public const string LibFileName = "__Internal";
-#else
         public const string LibFileName = "Pvr_UnitySDK";
 #endif
 
@@ -508,11 +572,8 @@ namespace Pvr_UnitySDKAPI
 
         // 2D Overlay
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
-        private static extern void Pvr_SetOverlayModelViewMatrix(int overlayType, int texId, int eye, int layerIndex, bool isHeadLocked,
-                                                                 float m0, float m1, float m2, float m3,
-                                                                 float m4, float m5, float m6, float m7,
-                                                                 float m8, float m9, float m10, float m11,
-                                                                 float m12, float m13, float m14, float m15);
+        private static extern void Pvr_SetOverlayModelViewMatrix(int overlayType, int overlayShape, int texId, int eyeSide, int layerIndex, bool isHeadLocked, int layerFlags,
+                                                                 float[] mvMatrix, float[] modelS, float[] modelR, float[] modelT, float[] cameraR, float[] cameraT);
 
         // Foveation
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
@@ -525,13 +586,15 @@ namespace Pvr_UnitySDKAPI
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
         private static extern void Pvr_SetColorspaceType(int colorspaceType);
 
-#elif IOS_DEVICE
-		[DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void UnityRenderEventIOS(int eventType,int eventData);
+        // External Surface
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr Pvr_CreateLayerAndroidSurface(int layerType, int layerIndex);
 
-		[DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
-		private static extern int Pvr_SetRatioIOS(float midH, float midV);
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr Pvr_GetLayerAndroidSurface(int layerType, int layerIndex);
 
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void Pvr_SetMonoMode(bool openMono);
 #endif
 
 
@@ -548,10 +611,37 @@ namespace Pvr_UnitySDKAPI
         {
 #if ANDROID_DEVICE
             return Pvr_SetRatio(midH, midV);
-#elif IOS_DEVICE
-			return Pvr_SetRatioIOS(midH, midV);
 #endif
             return 0;
+        }
+
+        public static EFoveationLevel GetFoveatedRenderingLevel()
+        {
+#if ANDROID_DEVICE
+            return Pvr_UnitySDKEyeManager.Instance.FoveationLevel;
+#endif
+            return EFoveationLevel.None;
+        }
+
+        public static void SetFoveatedRenderingLevel(EFoveationLevel level)
+        {
+#if ANDROID_DEVICE
+            Pvr_UnitySDKEyeManager.Instance.FoveationLevel = level;
+#endif
+        }
+
+        public static void GetFoveatedRenderingParameters(ref Vector2 ffrGainValue, ref float ffrAreaValue, ref float ffrMinimumValue)
+        {
+#if ANDROID_DEVICE
+            Pvr_UnitySDKEye.GetFoveatedRenderingParameters(ref ffrGainValue, ref ffrAreaValue, ref ffrMinimumValue);
+#endif
+        }
+
+        public static void SetFoveatedRenderingParameters(Vector2 ffrGainValue, float ffrAreaValue, float ffrMinimumValue)
+        {
+#if ANDROID_DEVICE
+            Pvr_UnitySDKEye.SetFoveatedRenderingParameters(ffrGainValue, ffrAreaValue, ffrMinimumValue);
+#endif
         }
 
         // Foveation
@@ -561,6 +651,7 @@ namespace Pvr_UnitySDKAPI
             Pvr_SetFoveationParameters(textureId, previousId, focalPointX, focalPointY, foveationGainX, foveationGainY, foveationArea, foveationMinimum);
 #endif
         }
+
         public static int UPvr_GetIntConfig(int configsenum, ref int res)
         {
 #if ANDROID_DEVICE
@@ -612,14 +703,30 @@ namespace Pvr_UnitySDKAPI
 #endif
         }
 
-        public static void UPvr_SetOverlayModelViewMatrix(int overlayType, int texId, int eye, int layerIndex, bool isHeadLocked, Matrix4x4 MV)
+        public static void UPvr_SetOverlayModelViewMatrix(int overlayType, int overlayShape, int texId, int eyeSide, int layerIndex, bool isHeadLocked, int layerFlags, Matrix4x4 mvMatrix, Vector3 modelS, Quaternion modelR, Vector3 modelT, Quaternion cameraR, Vector3 cameraT)
         {
 #if ANDROID_DEVICE
-            Pvr_SetOverlayModelViewMatrix(overlayType, texId, eye, layerIndex, isHeadLocked,
-            MV.m00, MV.m01, MV.m02, MV.m03,
-            MV.m10, MV.m11, MV.m12, MV.m13,
-            MV.m20, MV.m21, MV.m22, MV.m23,
-            MV.m30, MV.m31, MV.m32, MV.m33);
+            float[] mvMat = new float[16];
+            mvMat[0] = mvMatrix.m00; mvMat[1] = mvMatrix.m01; mvMat[2] = mvMatrix.m02; mvMat[3] = mvMatrix.m03;
+            mvMat[4] = mvMatrix.m10; mvMat[5] = mvMatrix.m11; mvMat[6] = mvMatrix.m12; mvMat[7] = mvMatrix.m13;
+            mvMat[8] = mvMatrix.m20; mvMat[9] = mvMatrix.m21; mvMat[10] = mvMatrix.m22; mvMat[11] = mvMatrix.m23;
+            mvMat[12] = mvMatrix.m30; mvMat[13] = mvMatrix.m31; mvMat[14] = mvMatrix.m32; mvMat[15] = mvMatrix.m33;
+			float[] scaleM = new float[3];
+			scaleM[0] = modelS.x; scaleM[1] = modelS.y; scaleM[2] = modelS.z;
+
+			float[] rotationM = new float[4];
+			rotationM[0] = modelR.x; rotationM[1] = modelR.y; rotationM[2] = modelR.z; rotationM[3] = modelR.w;
+
+			float[] translationM = new float[3];
+			translationM[0] = modelT.x; translationM[1] = modelT.y; translationM[2] = modelT.z;
+
+			float[] rotationC = new float[4];
+			rotationC[0] = cameraR.x; rotationC[1] = cameraR.y; rotationC[2] = cameraR.z; rotationC[3] = cameraR.w;
+
+			float[] translationC = new float[3];
+			translationC[0] = cameraT.x; translationC[1] = cameraT.y; translationC[2] = cameraT.z;
+
+            Pvr_SetOverlayModelViewMatrix(overlayType, overlayShape, texId, eyeSide, layerIndex, isHeadLocked, layerFlags,  mvMat, scaleM, rotationM, translationM, rotationC, translationC);
 #endif
         }
 
@@ -629,7 +736,32 @@ namespace Pvr_UnitySDKAPI
             Pvr_SetColorspaceType(colorspaceType);
 #endif
         }
-        #endregion
+
+        public static IntPtr UPvr_CreateLayerAndroidSurface(int layerType, int layerIndex)
+        {
+#if ANDROID_DEVICE
+            return Pvr_CreateLayerAndroidSurface(layerType, layerIndex);
+#else
+            return IntPtr.Zero;
+#endif
+        }
+
+        public static IntPtr UPvr_GetLayerAndroidSurface(int layerType, int layerIndex)
+        {
+#if ANDROID_DEVICE
+            return Pvr_GetLayerAndroidSurface(layerType, layerIndex);
+#else
+            return IntPtr.Zero;
+#endif
+        }
+
+        public static void UPvr_SetMonoMode(bool openMono)
+        {
+#if ANDROID_DEVICE
+            Pvr_SetMonoMode(openMono);
+#endif
+        }
+#endregion
 
     }
 
@@ -642,7 +774,7 @@ namespace Pvr_UnitySDKAPI
         public const string LibFileName = "Pvr_UnitySDK";
 #endif
 
-        public const string UnitySDKVersion = "2.8.1.5";
+        public const string UnitySDKVersion = "2.8.4.6";
 
 #if ANDROID_DEVICE
 		[DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
@@ -680,10 +812,31 @@ namespace Pvr_UnitySDKAPI
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
         public static extern bool Pvr_SetTrackingMode(int trackingMode);
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int Pvr_GetTrackingMode();
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
         public static extern int Pvr_GetPvrHandnessExt();
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void Pvr_SetPvrHandnessExt(int value);
+		[DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr GetRenderEventFunc();
 
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]       
+        public static extern void UnityEventData(long data);
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern bool Pvr_EnableSinglePass(bool enable);
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void Pvr_SetAntiAliasing(int antiAliasing);
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void Pvr_SinglePassBeforeForwardOpaque();
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void Pvr_SetCurrentRenderTexture(uint textureId);
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int PVR_setPerformanceLevels(int cpuLevel, int gpuLevel);
 #endif
 
 
@@ -697,7 +850,7 @@ namespace Pvr_UnitySDKAPI
             }
             catch (AndroidJavaException e)
             {
-                Debug.LogError("Exception calling static method " + name + ": " + e);
+                PLOG.E("Exception calling static method " + name + ": " + e);
                 return false;
             }
         }
@@ -711,7 +864,7 @@ namespace Pvr_UnitySDKAPI
             }
             catch (AndroidJavaException e)
             {
-                Debug.LogError("CallStaticMethod  Exception calling activity method " + name + ": " + e);
+                PLOG.E("CallStaticMethod  Exception calling activity method " + name + ": " + e);
                 return false;
             }
         }
@@ -725,7 +878,7 @@ namespace Pvr_UnitySDKAPI
             }
             catch (AndroidJavaException e)
             {
-                Debug.LogError("Exception calling activity method " + name + ": " + e);
+                PLOG.E("Exception calling activity method " + name + ": " + e);
                 return false;
             }
         }
@@ -739,7 +892,7 @@ namespace Pvr_UnitySDKAPI
             }
             catch (AndroidJavaException e)
             {
-                Debug.LogError(" Exception calling activity method " + name + ": " + e);
+                PLOG.E(" Exception calling activity method " + name + ": " + e);
                 return false;
             }
         }
@@ -787,7 +940,7 @@ namespace Pvr_UnitySDKAPI
         public static AndroidJavaObject UPvr_GetCurrentActivity()
         {
             AndroidJavaObject currentActivity = null;
-#if ANDROID_DEVICE           
+#if ANDROID_DEVICE
             UnityEngine.AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
             currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");          
 #endif
@@ -852,14 +1005,14 @@ namespace Pvr_UnitySDKAPI
                 if (Pvr_UnitySDKManager.pvr_UnitySDKRender !=null)
                 {
 					Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(Pvr_UnitySDKRender.javaVrActivityLongReceiver, "Pvr_StartReceiver", Pvr_UnitySDKManager.pvr_UnitySDKRender.activity, startreceivre);
-                    Debug.Log("Start home key   Receiver");
+                    PLOG.I("Start home key Receiver");
                     return true;
                 }
               
             }
             catch (Exception e)
             {
-                Debug.LogError("Start home key  Receiver  Error :" + e.ToString());
+                PLOG.E("Start home key  Receiver  Error :" + e.ToString());
                 return false;
             }
 #endif
@@ -873,14 +1026,14 @@ namespace Pvr_UnitySDKAPI
                 if (Pvr_UnitySDKManager.pvr_UnitySDKRender !=null)
                 {
 					Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod(Pvr_UnitySDKRender.javaVrActivityLongReceiver, "Pvr_StopReceiver", Pvr_UnitySDKManager.pvr_UnitySDKRender.activity);
-                    Debug.Log("Stop home key   Receiver");
+                    PLOG.I("Stop home key Receiver");
                     return true;
                 }
               
             }
             catch (Exception e)
             {
-                Debug.LogError("Stop home key  Receiver  Error :" + e.ToString());
+                PLOG.E("Stop home key Receiver Error :" + e.ToString());
                 return false;
             }
 #endif
@@ -931,6 +1084,18 @@ namespace Pvr_UnitySDKAPI
             return code;
         }
 #endregion
+
+        public static void UPvr_UnityEventData(long data)
+        {
+#if ANDROID_DEVICE
+             Pvr_UnitySDKAPI.System.UnityEventData(data);
+#endif
+        }
+
+        public static long UPvr_GetEyeBufferData(int id)
+        {
+            return (long)Pvr_UnitySDKManager.SDK.RenderviewNumber << 32 | (long)id;
+        }
 
         public static bool UPvr_checkDevice(string packagename)
         {
@@ -1001,6 +1166,15 @@ namespace Pvr_UnitySDKAPI
             return 0;
         }
 
+        public static int UPvr_GetTrackingMode()
+        {
+            int result = 0;
+#if ANDROID_DEVICE
+            result = Pvr_GetTrackingMode();
+#endif
+            return result;
+        }
+
         public static bool UPvr_setTrackingMode(int trackingMode)
         {
 #if ANDROID_DEVICE
@@ -1044,6 +1218,59 @@ namespace Pvr_UnitySDKAPI
             return result;            
 #endif
             return false;
+        }
+
+        public static bool UPvr_getEyeTrackingGazeRay(ref EyeTrackingGazeRay gazeRay)
+        {
+#if ANDROID_DEVICE
+            EyeTrackingData eyeTrackingData = new EyeTrackingData();
+            bool result = Pvr_UnitySDKAPI.System.UPvr_getEyeTrackingData(ref eyeTrackingData);
+
+            gazeRay.IsValid = (eyeTrackingData.combinedEyePoseStatus & (int)Pvr_UnitySDKAPI.pvrEyePoseStatus.kGazePointValid) != 0 && (eyeTrackingData.combinedEyePoseStatus & (int)Pvr_UnitySDKAPI.pvrEyePoseStatus.kGazeVectorValid) != 0;
+            if(gazeRay.IsValid)
+            {
+                gazeRay.Direction = eyeTrackingData.combinedEyeGazeVector;
+                gazeRay.Origin = eyeTrackingData.combinedEyeGazePoint;
+                gazeRay.Origin = Pvr_UnitySDKManager.SDK.HeadPose.Matrix.MultiplyPoint(gazeRay.Origin);
+                gazeRay.Direction = Pvr_UnitySDKManager.SDK.HeadPose.Matrix.MultiplyVector(gazeRay.Direction);
+                return true;
+            }
+
+            return false;
+#endif
+            gazeRay.Origin = Vector3.zero;
+            gazeRay.Direction = Vector3.forward;
+            gazeRay.Origin = Pvr_UnitySDKManager.SDK.HeadPose.Matrix.MultiplyPoint(gazeRay.Origin);
+            gazeRay.Direction = Pvr_UnitySDKManager.SDK.HeadPose.Matrix.MultiplyVector(gazeRay.Direction);
+            return true;
+        }
+
+        public static bool UPvr_getEyeTrackingGazeRayWorld(ref EyeTrackingGazeRay gazeRay)
+        {
+            Transform target = Pvr_UnitySDKEyeManager.Instance.transform;
+            Matrix4x4 mat = Matrix4x4.TRS(target.position, target.rotation, Vector3.one);
+#if ANDROID_DEVICE
+            EyeTrackingData eyeTrackingData = new EyeTrackingData();
+            bool result = Pvr_UnitySDKAPI.System.UPvr_getEyeTrackingData(ref eyeTrackingData);
+
+            gazeRay.IsValid = (eyeTrackingData.combinedEyePoseStatus & (int)Pvr_UnitySDKAPI.pvrEyePoseStatus.kGazePointValid) != 0 && (eyeTrackingData.combinedEyePoseStatus & (int)Pvr_UnitySDKAPI.pvrEyePoseStatus.kGazeVectorValid) != 0;
+            if(gazeRay.IsValid)
+            {
+                gazeRay.Direction = eyeTrackingData.combinedEyeGazeVector;
+                gazeRay.Origin = eyeTrackingData.combinedEyeGazePoint;
+                gazeRay.Origin = mat.MultiplyPoint(gazeRay.Origin);
+                gazeRay.Direction = mat.MultiplyVector(gazeRay.Direction);
+                return true;
+            }
+
+            return false;
+#endif
+            gazeRay.IsValid = true;
+            gazeRay.Origin = Vector3.zero;
+            gazeRay.Direction = Vector3.forward;
+            gazeRay.Origin = mat.MultiplyPoint(gazeRay.Origin);
+            gazeRay.Direction = mat.MultiplyVector(gazeRay.Direction);
+            return true;
         }
 
         public static Vector3 UPvr_getEyeTrackingPos()
@@ -1101,6 +1328,221 @@ namespace Pvr_UnitySDKAPI
             Pvr_SetPvrHandnessExt(value);
 #endif
         }
+
+        public static bool UPvr_EnableSinglePass(bool enable)
+        {
+#if ANDROID_DEVICE
+            return Pvr_UnitySDKAPI.System.Pvr_EnableSinglePass(enable);
+#endif
+            return false;
+        }
+
+        public static void UPvr_SetAntiAliasing(int antiAliasing)
+        {
+#if ANDROID_DEVICE
+            Pvr_UnitySDKAPI.System.Pvr_SetAntiAliasing(antiAliasing);
+#endif
+        }
+
+        public static void UPvr_SinglePassBeforeForwardOpaque()
+        {
+#if ANDROID_DEVICE
+            Pvr_UnitySDKAPI.System.Pvr_SinglePassBeforeForwardOpaque();
+#endif
+        }
+
+        public static void UPvr_SetCurrentRenderTexture(uint textureId)
+        {
+#if ANDROID_DEVICE
+            Pvr_UnitySDKAPI.System.Pvr_SetCurrentRenderTexture(textureId);
+#endif
+        }
+
+        public static int UPVR_setPerformanceLevels(int cpuLevel, int gpuLevel)
+        {
+            int result = -1;
+#if ANDROID_DEVICE
+            result = Pvr_UnitySDKAPI.System.PVR_setPerformanceLevels(cpuLevel, gpuLevel);
+#endif
+            return result;
+        }
+
+        public static int UPvr_GetColorRes(string name)
+        {
+            int value = -1;
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getColorRes", name);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetColorResError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
+        public static int UPvr_GetConfigInt(string name)
+        {
+            int value = -1;
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getConfigInt", name);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetConfigIntError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
+        public static string UPvr_GetConfigString(string name)
+        {
+            string value = "";
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<string>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getConfigString", name);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetConfigStringError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
+        public static string UPvr_GetDrawableLocation(string name)
+        {
+            string value = "";
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<string>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getDrawableLocation", name);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetDrawableLocationError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
+        public static int UPvr_GetTextSize(string name)
+        {
+            int value = -1;
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getTextSize", name);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetTextSizeError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
+        public static string UPvr_GetLangString(string name)
+        {
+            string value = "";
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<string>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getLangString", name);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetLangStringError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
+        public static string UPvr_GetStringValue(string id,int type)
+        {
+            string value = "";
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<string>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getStringValue", id, type);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetStringValueError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
+        public static int UPvr_GetIntValue(string id,int type)
+        {
+            int value = -1;
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getIntValue", id, type);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetIntValueError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
+        public static float UPvr_GetFloatValue(string id)
+        {
+            float value = -1;
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<float>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getFloatValue", id);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetFloatValueError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
+        public static string UPvr_GetObjectOrArray(string id, int type)
+        {
+            string value = "";
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<string>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getObjectOrArray", id, type);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetObjectOrArrayError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
+        public static int UPvr_GetCharSpace(string id)
+        {
+            int value = -1;
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref value, Pvr_UnitySDKRender.javaVrActivityClass, "getCharSpace", id);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("GetCharSpaceError :" + e.ToString());
+            }
+#endif
+            return value;
+        }
+
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -1121,7 +1563,62 @@ namespace Pvr_UnitySDKAPI
 
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
         private static extern bool Pvr_GetFrameRateLimit();
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool Pvr_IsBoundaryEnable();
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool Pvr_BoundaryGetConfigured();
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool Pvr_BoundaryTestNode(int node, bool isPlayArea, ref bool isTriggering, ref float closestDistance, ref float px, ref float py, ref float pz, ref float nx, ref float ny, ref float nz);
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool Pvr_BoundaryTestPoint(float x, float y, float z, bool isPlayArea, ref bool isTriggering, ref float closestDistance, ref float px, ref float py, ref float pz, ref float nx, ref float ny, ref float nz);
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool Pvr_BoundaryGetEnabled();
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void Pvr_BoundarySetVisible(bool value);
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool Pvr_EnableLWRP(bool enable);
+
+        [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern bool Pvr_SetViewportSize(int w, int h);
+
 #endif
+
+        /// <summary>
+        /// Boundary Type
+        /// </summary>
+        public enum BoundaryType
+        {
+            OuterBoundary,
+            PlayArea
+        }
+
+        /// <summary>
+        /// Result of boundary test API
+        /// </summary>
+        public struct BoundaryTestResult
+        {
+            public bool IsTriggering;
+            public float ClosestDistance;
+            public Vector3 ClosestPoint;
+            public Vector3 ClosestPointNormal;
+        }
+
+        /// <summary>
+        /// Boundary Test Node Type
+        /// </summary>
+        public enum BoundaryTrackingNode
+        {
+            HandLeft    = 0,
+            HandRight   = 1,
+            Head        = 2
+        }
 
         public static float UPvr_GetFloorHeight()
         {
@@ -1156,5 +1653,217 @@ namespace Pvr_UnitySDKAPI
             return ret;
         }
 
+        public static bool UPvr_IsBoundaryEnable()
+        {
+            bool state = false;
+#if ANDROID_DEVICE
+            state = Pvr_IsBoundaryEnable();
+#endif
+            return state;
+        }
+
+        /// <summary>
+        /// Returns true if the boundary system is currently configured with valid boundary data.
+        /// </summary>
+        /// <returns></returns>
+        public static bool UPvr_BoundaryGetConfigured()
+        {
+            bool ret = false;
+#if ANDROID_DEVICE
+            ret = Pvr_BoundaryGetConfigured();
+#endif
+            return ret;
+        }
+
+        /// <summary>
+        ///  Returns the result of testing a tracked node against the specified boundary type
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="boundaryType"></param>
+        /// <returns></returns>
+        public static BoundaryTestResult UPvr_BoundaryTestNode(BoundaryTrackingNode node, BoundaryType boundaryType)
+        {
+            BoundaryTestResult testResult = new BoundaryTestResult();
+#if ANDROID_DEVICE
+            bool ret = Pvr_BoundaryTestNode((int)node, boundaryType == BoundaryType.PlayArea, ref testResult.IsTriggering, ref testResult.ClosestDistance,
+                ref testResult.ClosestPoint.x, ref testResult.ClosestPoint.y, ref testResult.ClosestPoint.z,
+                ref testResult.ClosestPointNormal.x, ref testResult.ClosestPointNormal.y, ref testResult.ClosestPointNormal.z);
+
+            if (!ret)
+            {
+                Debug.LogError(string.Format("UPvr_BoundaryTestNode({0}, {1}) API call failed!", node, boundaryType));
+            }
+#endif
+            return testResult;
+        }
+
+        /// <summary>
+        /// Returns the result of testing a 3d point against the specified boundary type.
+        /// </summary>
+        /// <param name="point">the coordinate of the point</param>
+        /// <param name="boundaryType">OuterBoundary or PlayArea</param>
+        /// <returns></returns>
+        public static BoundaryTestResult UPvr_BoundaryTestPoint(Vector3 point, BoundaryType boundaryType)
+        {
+            BoundaryTestResult testResult = new BoundaryTestResult();
+#if ANDROID_DEVICE
+            bool ret = Pvr_BoundaryTestPoint(point.x, point.y, point.z, boundaryType == BoundaryType.PlayArea, ref testResult.IsTriggering, ref testResult.ClosestDistance, 
+                ref testResult.ClosestPoint.x, ref testResult.ClosestPoint.y, ref testResult.ClosestPoint.z, 
+                ref testResult.ClosestPointNormal.x, ref testResult.ClosestPointNormal.y, ref testResult.ClosestPointNormal.z);
+
+            if (!ret)
+            {
+                Debug.LogError(string.Format("UPvr_BoundaryTestPoint({0}, {1}) API call failed!", point, boundaryType));
+            }
+#endif
+            return testResult;
+        }
+
+        /// <summary>
+        /// Returns true if the boundary system is currently enabled.
+        /// </summary>
+        /// <returns></returns>
+        public static bool UPvr_BoundaryGetEnabled()
+        {
+            bool ret = false;
+#if ANDROID_DEVICE
+            ret = Pvr_BoundaryGetEnabled();
+#endif
+            return ret;
+        }
+
+        /// <summary>
+        /// Set boundary system visibility to be the specified value.
+        /// Note:
+        ///     The actual visibility of boundary can be overridden by the system(e.g. proximity trigger) or user setting(e.g. disable boundary system).
+        /// </summary>
+        /// <param name="value"></param>
+        public static void UPvr_BoundarySetVisible(bool value)
+        {
+#if ANDROID_DEVICE
+            Pvr_BoundarySetVisible(value);
+#endif
+        }
+
+
+
+
+        public static bool UPvr_EnableLWRP(bool enable)
+        {
+#if ANDROID_DEVICE
+            return Pvr_EnableLWRP(enable);
+#endif
+            return false;
+        }
+
+        public static bool UPvr_SetViewportSize(int width, int height)
+        {
+#if ANDROID_DEVICE
+            return Pvr_SetViewportSize(width, height);
+#endif
+            return false;
+        }
+
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PlatformSettings
+    {
+        public static Pvr_UnitySDKPlatformSetting.simulationType UPvr_IsCurrentDeviceValid()
+        {
+            if (Pvr_UnitySDKPlatformSetting.Entitlementchecksimulation)
+            {
+                if (Pvr_UnitySDKPlatformSetting.Instance.deviceSN.Count <= 0)
+                {
+                    return Pvr_UnitySDKPlatformSetting.simulationType.Null;
+                }
+                else
+                {
+                    foreach (var t in Pvr_UnitySDKPlatformSetting.Instance.deviceSN)
+                    {
+                        if (System.UPvr_GetDeviceSN() == t)
+                        {
+                            return Pvr_UnitySDKPlatformSetting.simulationType.Valid;
+                        }
+                    }
+
+                    return Pvr_UnitySDKPlatformSetting.simulationType.Invalid;
+                }
+            }
+            else
+            {
+                return Pvr_UnitySDKPlatformSetting.simulationType.Invalid;
+            }
+        }
+
+        public static bool UPvr_AppEntitlementCheck(string appid)
+        {
+            bool state = false;
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<bool>(ref state, Pvr_UnitySDKRender.javaVrActivityClass, "verifyAPP", System.UPvr_GetCurrentActivity(), appid,"");
+            }
+            catch (Exception e)
+            {
+                PLOG.E("Error :" + e.ToString());
+            }
+#endif
+            Debug.Log("PvrLog UPvr_AppEntitlementCheck" + state);
+            return state;
+        }
+
+        public static bool UPvr_KeyEntitlementCheck(string publicKey)
+        {
+            bool state = false;
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<bool>(ref state, Pvr_UnitySDKRender.javaVrActivityClass,"verifyAPP", System.UPvr_GetCurrentActivity(),"",publicKey);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("Error :" + e.ToString());
+            }
+#endif
+            Debug.Log("PvrLog UPvr_KeyEntitlementCheck" + state);
+            return state;
+        }
+
+        //0:success -1:invalid params -2:service not exist -3:time out
+        public static int UPvr_AppEntitlementCheckExtra(string appid)
+        {
+            int state = -1;
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref state, Pvr_UnitySDKRender.javaVrActivityClass, "verifyAPPExt", System.UPvr_GetCurrentActivity(), appid,"");
+            }
+            catch (Exception e)
+            {
+                PLOG.E("Error :" + e.ToString());
+            }
+#endif
+            Debug.Log("PvrLog UPvr_AppEntitlementCheck" + state);
+            return state;
+        }
+
+        //0:success -1:invalid params -2:service not exist -3:time out
+        public static int UPvr_KeyEntitlementCheckExtra(string publicKey)
+        {
+            int state = -1;
+#if ANDROID_DEVICE
+            try
+            {
+                Pvr_UnitySDKAPI.System.UPvr_CallStaticMethod<int>(ref state, Pvr_UnitySDKRender.javaVrActivityClass,"verifyAPPExt", System.UPvr_GetCurrentActivity(),"",publicKey);
+            }
+            catch (Exception e)
+            {
+                PLOG.E("Error :" + e.ToString());
+            }
+#endif
+            Debug.Log("PvrLog UPvr_KeyEntitlementCheck" + state);
+            return state;
+        }
     }
 }

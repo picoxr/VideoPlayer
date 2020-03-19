@@ -1,11 +1,5 @@
-﻿#if !UNITY_EDITOR
-#if UNITY_ANDROID
+﻿#if !UNITY_EDITOR && UNITY_ANDROID 
 #define ANDROID_DEVICE
-#elif UNITY_IPHONE
-#define IOS_DEVICE
-#elif UNITY_STANDALONE_WIN
-#define WIN_DEVICE
-#endif
 #endif
 
 using System;
@@ -51,8 +45,8 @@ namespace Pvr_UnitySDKAPI
         private static UnityEngine.AndroidJavaClass batteryjavaVrActivityClass;     
         private static UnityEngine.AndroidJavaClass volumejavaVrActivityClass;
 #endif
-
         #region Public Function
+
         public static bool UPvr_IsHmdExist()
         {
 #if ANDROID_DEVICE
@@ -60,6 +54,7 @@ namespace Pvr_UnitySDKAPI
 #endif
             return false;
         }
+
         public static int UPvr_GetHmdScreenBrightness()
         {
 #if ANDROID_DEVICE
@@ -75,16 +70,17 @@ namespace Pvr_UnitySDKAPI
 #endif
             return false;
         }
+
         public static bool UPvr_SetCommonBrightness(int brightness)
         {
             bool enable = false;
-            if (Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_IsHmdExist())
+            if (UPvr_IsHmdExist())
             {
-                enable = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_SetHmdScreenBrightness(brightness);
+                enable = UPvr_SetHmdScreenBrightness(brightness);
             }
             else
             {
-                enable = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_SetBrightness(brightness);
+                enable = UPvr_SetBrightness(brightness);
             }
             return enable;
         }
@@ -92,13 +88,13 @@ namespace Pvr_UnitySDKAPI
         public static int UPvr_GetCommonBrightness()
         {
             int lightness = 0;
-            if (Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_IsHmdExist())
+            if (UPvr_IsHmdExist())
             {
-                lightness = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_GetHmdScreenBrightness();
+                lightness = UPvr_GetHmdScreenBrightness();
             }
             else
             {
-                lightness = Pvr_UnitySDKAPI.VolumePowerBrightness.UPvr_GetCurrentBrightness();
+                lightness = UPvr_GetCurrentBrightness();
             }
             return lightness;
         }
@@ -117,10 +113,12 @@ namespace Pvr_UnitySDKAPI
         {
             return setDevicePropForUser(deviceid, number); ;
         }
+
         public static string UPvr_GetDevicePropForUser(DeviceCommand deviceid)
         {
             return getDevicePropForUser(deviceid);
         }
+
         public static bool UPvr_InitBatteryClass()
         {
 #if ANDROID_DEVICE
@@ -129,7 +127,6 @@ namespace Pvr_UnitySDKAPI
                 if (javaSysActivityClass == null)
                 {
                     javaSysActivityClass = new UnityEngine.AndroidJavaClass("com.psmart.aosoperation.SysActivity");
-
                 }
 
                 if (javaSysActivityClass != null &&Pvr_UnitySDKManager.pvr_UnitySDKRender.activity != null)
@@ -146,18 +143,18 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError("startReceiver Error :" + e.ToString());
+                PLOG.E("startReceiver Error :" + e.ToString());
                 return false;
             }
 #endif
             return true;
         }
+
         public static bool UPvr_InitBatteryVolClass()
         {
 #if ANDROID_DEVICE
             try
             {
-               
                 javaSysActivityClass = new UnityEngine.AndroidJavaClass("com.psmart.aosoperation.SysActivity");
                 if (javaSysActivityClass != null &&Pvr_UnitySDKManager.pvr_UnitySDKRender.activity != null)
                 {
@@ -173,12 +170,13 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError("startReceiver Error :" + e.ToString());
+                PLOG.E("startReceiver Error :" + e.ToString());
                 return false;
             }
 #endif
             return true;
         }
+
         public static bool UPvr_StartBatteryReceiver(string startreceivre)
         {
 #if ANDROID_DEVICE
@@ -190,12 +188,13 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError("startReceiver Error :" + e.ToString());
+                PLOG.E("startReceiver Error :" + e.ToString());
                 return false;
             }
 #endif
             return true;
         }
+
         public static bool UPvr_StopBatteryReceiver()
         {
 #if ANDROID_DEVICE
@@ -206,12 +205,13 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError("startReceiver Error :" + e.ToString());
+                PLOG.E("startReceiver Error :" + e.ToString());
                 return false;
             }
 #endif
             return true;
         }
+
         public static bool UPvr_SetBrightness(int brightness)
         {
 #if ANDROID_DEVICE
@@ -222,12 +222,13 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E(" Error :" + e.ToString());
                 return false;
             }
 #endif
             return true;
         }
+
         public static int UPvr_GetCurrentBrightness()
         {
 #if ANDROID_DEVICE
@@ -238,12 +239,13 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E(" Error :" + e.ToString());
             }
             return currentlight;
 #endif
             return 0;
         }
+
         public static int[] Pvr_GetScreenBrightnessLevel()
         {
             int[] currentlight = { 0 };
@@ -255,7 +257,7 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E(" Error :" + e.ToString());
             }
 #endif
             return currentlight;
@@ -271,10 +273,11 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E(" Error :" + e.ToString());
             }
 #endif
         }
+
         public static bool UPvr_StartAudioReceiver(string startreceivre)
         {
 #if ANDROID_DEVICE
@@ -286,12 +289,13 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError("startReceiver Error :" + e.ToString());
+                PLOG.E("startReceiver Error :" + e.ToString());
                 return false;
             }
 #endif
             return true;
         }
+
         public static bool UPvr_StopAudioReceiver()
         {
 #if ANDROID_DEVICE
@@ -302,13 +306,14 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError("startReceiver Error :" + e.ToString());
+                PLOG.E("startReceiver Error :" + e.ToString());
                 return false;
             }
 
 #endif
             return true;
         }
+
         public static int UPvr_GetMaxVolumeNumber()
         {
 #if ANDROID_DEVICE
@@ -319,12 +324,13 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E(" Error :" + e.ToString());
             }
             return maxvolm;
 #endif
             return 0;
         }
+
         public static int UPvr_GetCurrentVolumeNumber()
         {
 #if ANDROID_DEVICE
@@ -335,12 +341,13 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E(" Error :" + e.ToString());
             }
             return currentvolm;
 #endif
             return 0;
         }
+
         public static bool UPvr_VolumeUp()
         {
 #if ANDROID_DEVICE
@@ -351,12 +358,13 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E(" Error :" + e.ToString());
                 return false;
             }
 #endif
             return true;
         }
+
         public static bool UPvr_VolumeDown()
         {
 #if ANDROID_DEVICE
@@ -367,12 +375,13 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E(" Error :" + e.ToString());
                 return false;
             }
 #endif
             return true;
         }
+
         public static bool UPvr_SetVolumeNum(int volume)
         {
 #if ANDROID_DEVICE
@@ -383,16 +392,18 @@ namespace Pvr_UnitySDKAPI
             }
             catch (Exception e)
             {
-                Debug.LogError(" Error :" + e.ToString());
+                PLOG.E(" Error :" + e.ToString());
                 return false;
             }
 #endif
             return true;
         }
+
         public static bool UPvr_SetAudio(string s)
         {
             return false;
         }
+
         public static bool UPvr_SetBattery(string s)
         {
             return false;

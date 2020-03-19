@@ -1,47 +1,49 @@
-﻿using System;
+﻿#if !UNITY_EDITOR && UNITY_ANDROID 
+#define ANDROID_DEVICE
+#endif
+
+using System;
 using UnityEngine;
 using System.Collections;
 using Pvr_UnitySDKAPI;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using LitJson;
 
-public class Pvr_ControllerInit : MonoBehaviour {
-
-    
+public class Pvr_ControllerInit : MonoBehaviour
+{
     private ControllerVariety Variety;
     private bool isCustomModel = false;
     [SerializeField]
-    private GameObject controller1;
+    private GameObject goblin;
     [SerializeField]
-    private GameObject controller2;
+    private GameObject neo;
     [SerializeField]
-    private GameObject controller3;
+    private GameObject g2;
     [SerializeField]
-    private GameObject controller4;
+    private GameObject neo2;
     [SerializeField]
-    private Material generalMat;
+    private Material standardMat;
     [SerializeField]
-    private GameObject controllerpower;
-    [SerializeField]
-    private GameObject controllertips;
-    [SerializeField]
-    private GameObject pptouch;
-    
+    private Material unlitMat;
+
     private int controllerType = -1;
     [HideInInspector]
     public bool loadModelSuccess = false;
-
     private string modelFilePath = "/system/media/PvrRes/controller/";
     private int systemOrUnity = 0;
 
+    private JsonData curControllerData;
+    private int curControllerNum = 1;
+    private string modelName = "";
+
     void Awake()
     {
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if ANDROID_DEVICE
         int enumindex = (int)GlobalIntConfigs.iCtrlModelLoadingPri;
         Render.UPvr_GetIntConfig(enumindex, ref systemOrUnity);
 #endif
-        DestroyController();
         Variety = transform.GetComponentInParent<Pvr_ControllerModuleInit>().Variety;
         isCustomModel = transform.GetComponentInParent<Pvr_ControllerModuleInit>().IsCustomModel;
         if (!isCustomModel)
@@ -52,7 +54,7 @@ public class Pvr_ControllerInit : MonoBehaviour {
         }
 
 #if UNITY_EDITOR
-        controller3.SetActive(true);
+        neo2.SetActive(true);
 #endif
     }
     void OnDestroy()
@@ -62,6 +64,16 @@ public class Pvr_ControllerInit : MonoBehaviour {
         Pvr_ControllerManager.ControllerStatusChangeEvent -= CheckControllerStateForGoblin;
     }
 
+    private void OnApplicationPause(bool pause)
+    {
+#if ANDROID_DEVICE
+        if (pause)
+        {
+            HideController();
+        }
+#endif
+    }
+
     private void ServiceStartSuccess()
     {
         var type = Controller.UPvr_GetDeviceType();
@@ -69,23 +81,16 @@ public class Pvr_ControllerInit : MonoBehaviour {
         {
             controllerType = type;
         }
+
+        LoadResFromJson();
+
         if (Pvr_ControllerManager.controllerlink.neoserviceStarted)
         {
             if (Variety == ControllerVariety.Controller0)
             {
                 if (Pvr_ControllerManager.controllerlink.controller0Connected)
                 {
-                    if (type == 0)
-                    {
-                        controller1.SetActive(false);
-                        controller2.SetActive(true);
-                        controller3.SetActive(false);
-                        loadModelSuccess = true;
-                    }
-                    else
-                    {
-                        StartCoroutine(RefreshController());
-                    }
+                    StartCoroutine(RefreshController(0));
                 }
                 else
                 {
@@ -96,17 +101,7 @@ public class Pvr_ControllerInit : MonoBehaviour {
             {
                 if (Pvr_ControllerManager.controllerlink.controller1Connected)
                 {
-                    if (type == 0)
-                    {
-                        controller1.SetActive(false);
-                        controller2.SetActive(true);
-                        controller3.SetActive(false);
-                        loadModelSuccess = true;
-                    }
-                    else
-                    {
-                        StartCoroutine(RefreshController());
-                    }
+                    StartCoroutine(RefreshController(1));
                 }
                 else
                 {
@@ -120,17 +115,7 @@ public class Pvr_ControllerInit : MonoBehaviour {
             {
                 if (Pvr_ControllerManager.controllerlink.controller0Connected)
                 {
-                    if (type == 0)
-                    {
-                        controller1.SetActive(true);
-                        controller2.SetActive(false);
-                        controller3.SetActive(false);
-                        loadModelSuccess = true;
-                    }
-                    else
-                    {
-                        StartCoroutine(RefreshController());
-                    }
+                    StartCoroutine(RefreshController(0));
                 }
                 else
                 {
@@ -138,6 +123,27 @@ public class Pvr_ControllerInit : MonoBehaviour {
                 }
             }
         }
+    }
+
+    private void LoadResFromJson()
+    {
+        string json = Pvr_UnitySDKAPI.System.UPvr_GetObjectOrArray("config.controller",
+            (int)Pvr_UnitySDKAPI.ResUtilsType.TYPR_OBJECTARRAY);
+        if (json != null)
+        {
+            JsonData jdata = JsonMapper.ToObject(json);
+            if (controllerType >= 0)
+            {
+                curControllerData = jdata[controllerType - 1];
+                modelFilePath = (string)curControllerData["base_path"];
+                modelName = (string)curControllerData["model_name"] + "_sys";
+            }
+        }
+        else
+        {
+            PLOG.E("PvrLog LoadJsonFromSystem Error");
+        }
+
     }
 
     private void CheckControllerStateForGoblin(string state)
@@ -151,12 +157,8 @@ public class Pvr_ControllerInit : MonoBehaviour {
                 {
                     DestroyController();
                     controllerType = type;
-                    StartCoroutine(RefreshController());
                 }
-                else
-                {
-                    StartCoroutine(RefreshController());
-                }
+                StartCoroutine(RefreshController(0));
             }
             else
             {
@@ -178,13 +180,13 @@ public class Pvr_ControllerInit : MonoBehaviour {
                 case 0:
                     if (Variety == ControllerVariety.Controller0)
                     {
-                        StartCoroutine(RefreshController());
+                        StartCoroutine(RefreshController(0));
                     }
                     break;
                 case 1:
                     if (Variety == ControllerVariety.Controller1)
                     {
-                        StartCoroutine(RefreshController());
+                        StartCoroutine(RefreshController(1));
                     }
                     break;
             }
@@ -220,82 +222,134 @@ public class Pvr_ControllerInit : MonoBehaviour {
             }
         }
     }
+
     private void DestroyController()
     {
-        foreach(Transform t in transform)
+        foreach (Transform t in transform)
         {
-            if (t.name == "controller" + controllerType + "s")
+            if (t.name == modelName)
             {
                 Destroy(t.gameObject);
                 loadModelSuccess = false;
             }
         }
     }
-   
-    private IEnumerator RefreshController()
+
+    private IEnumerator RefreshController(int id)
     {
         yield return null;
         yield return null;
-        var isControllerExist = false;
-        foreach (Transform t in transform)
-        {
-            if (t.name == "controller" + controllerType + "s")
-            {
-                isControllerExist = true;
-            }
-        }
-        if (!isControllerExist)
+
+        if (Controller.UPvr_GetControllerState(id) == ControllerState.Connected)
         {
             if (systemOrUnity == 0)
             {
                 LoadControllerFromPrefab();
                 if (!loadModelSuccess)
                 {
-                    LoadControllerFromSystem();
+                    LoadControllerFromSystem(id);
                 }
             }
             else
             {
-                LoadControllerFromSystem();
-                if (!loadModelSuccess)
+                var isControllerExist = false;
+                foreach (Transform t in transform)
                 {
-                    LoadControllerFromPrefab();
+                    if (t.name == modelName)
+                    {
+                        isControllerExist = true;
+                    }
+                }
+                if (!isControllerExist)
+                {
+                    LoadControllerFromSystem(id);
+                    if (!loadModelSuccess)
+                    {
+                        LoadControllerFromPrefab();
+                    }
+                }
+                else
+                {
+                    var currentController = transform.Find(modelName);
+                    currentController.gameObject.SetActive(true);
                 }
             }
-        }
-        else
-        {
-            var currentController = transform.Find("controller" + controllerType + "s");
-            currentController.gameObject.SetActive(true);
+            Pvr_ToolTips.RefreshTips();
+            PLOG.I("PvrLog Controller Refresh Success");
         }
     }
 
-    private void  LoadControllerFromSystem()
+    private void LoadControllerFromPrefab()
     {
-        var syscontrollername = "controller" + controllerType + "s.obj";
-        var fullFilePath = modelFilePath + "/" + syscontrollername ;
+        switch (controllerType)
+        {
+            case 1:
+                goblin.SetActive(true);
+                neo.SetActive(false);
+                g2.SetActive(false);
+                neo2.SetActive(false);
+                loadModelSuccess = true;
+                break;
+            case 2:
+                goblin.SetActive(false);
+                neo.SetActive(true);
+                g2.SetActive(false);
+                neo2.SetActive(false);
+                loadModelSuccess = true;
+                break;
+            case 3:
+                goblin.SetActive(false);
+                neo.SetActive(false);
+                g2.SetActive(true);
+                neo2.SetActive(false);
+                loadModelSuccess = true;
+                break;
+            case 4:
+                goblin.SetActive(false);
+                neo.SetActive(false);
+                g2.SetActive(false);
+                neo2.SetActive(true);
+                loadModelSuccess = true;
+                break;
+            default:
+                goblin.SetActive(false);
+                neo.SetActive(false);
+                g2.SetActive(false);
+                neo2.SetActive(false);
+                loadModelSuccess = false;
+                break;
+        }
+    }
+
+    private void LoadControllerFromSystem(int id)
+    {
+        var syscontrollername = controllerType.ToString() + id.ToString() + ".obj";
+        var fullFilePath = modelFilePath + syscontrollername;
+
         if (!File.Exists(fullFilePath))
         {
-            Debug.Log("Obj File does not exist");
+            PLOG.E("PvrLog Obj File does not exist==" + fullFilePath);
         }
         else
         {
             GameObject go = new GameObject();
-            go.name = "controller" + controllerType + "s";
+            go.name = modelName;
             MeshFilter meshFilter = go.AddComponent<MeshFilter>();
             meshFilter.mesh = Pvr_ObjImporter.Instance.ImportFile(fullFilePath);
             go.transform.SetParent(transform);
             go.transform.localPosition = Vector3.zero;
-            
+
             MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
-            meshRenderer.material = generalMat;
+            int matID = (int)curControllerData["material_type"];
+            meshRenderer.material = matID == 0 ? standardMat : unlitMat;
+
             loadModelSuccess = true;
             Pvr_ControllerVisual controllerVisual = go.AddComponent<Pvr_ControllerVisual>();
             switch (controllerType)
             {
                 case 1:
                     {
-                        controllerVisual.currentDevice = ControllerDevice.Goblin1;
+                        controllerVisual.currentDevice = ControllerDevice.Goblin;
                     }
                     break;
                 case 2:
@@ -308,128 +362,72 @@ public class Pvr_ControllerInit : MonoBehaviour {
                         controllerVisual.currentDevice = ControllerDevice.G2;
                     }
                     break;
+                case 4:
+                    {
+                        controllerVisual.currentDevice = ControllerDevice.Neo2;
+                    }
+                    break;
                 default:
                     controllerVisual.currentDevice = ControllerDevice.NewController;
                     break;
             }
+
             controllerVisual.variety = Variety;
-            LoadTextureFromSystem(controllerVisual);
-            if (controllerType <= 3)
-            {
-                var touch = Instantiate(pptouch);
-                touch.transform.SetParent(go.transform);
-                touch.GetComponent<Pvr_TouchVisual>().currentDevice = controllerVisual.currentDevice;
-                touch.GetComponent<Pvr_TouchVisual>().variety = Variety;
-                switch (controllerType)
-                {
-                    case 2:
-                        {
-                            var power = Instantiate(controllerpower);
-                            power.transform.SetParent(go.transform);
-                            power.transform.localPosition = new Vector3(0, 1.07f, 3.73f);
-                        }
-                        break;
-                    case 3:
-                        {
-                            var power = Instantiate(controllerpower);
-                            power.transform.SetParent(go.transform);
-                            power.transform.localPosition = new Vector3(0, 1.576f, 3.73f);
-                            var tips = Instantiate(controllertips);
-                            tips.transform.SetParent(go.transform);
-                            tips.transform.localPosition = new Vector3(-0.143f, 0.44f, -0.87f);
-                        }
-                        break;
-                }
-            }
+            LoadTextureFromSystem(controllerVisual, controllerType.ToString() + id.ToString());
             go.transform.localRotation = Quaternion.Euler(new Vector3(0, 180, 0));
-            go.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+            go.transform.localScale = new Vector3(-0.01f, 0.01f, 0.01f);
         }
     }
 
-    private void LoadControllerFromPrefab()
-    {
-        switch (controllerType)
-        {
-            case 1:
-                controller1.SetActive(true);
-                controller2.SetActive(false);
-                controller3.SetActive(false);
-                controller4.SetActive(false);
-                loadModelSuccess = true;
-                break;
-            case 2:
-                controller1.SetActive(false);
-                controller2.SetActive(true);
-                controller3.SetActive(false);
-                controller4.SetActive(false);
-                loadModelSuccess = true;
-                break;
-            case 3:
-                controller1.SetActive(false);
-                controller2.SetActive(false);
-                controller3.SetActive(true);
-                controller4.SetActive(false);
-                loadModelSuccess = true;
-                break;
-            case 4:
-                controller1.SetActive(false);
-                controller2.SetActive(false);
-                controller3.SetActive(false);
-                controller4.SetActive(true);
-                loadModelSuccess = true;
-                break;
-            default:
-                controller1.SetActive(false);
-                controller2.SetActive(false);
-                controller3.SetActive(false);
-                controller4.SetActive(false);
-                loadModelSuccess = false;
-                break;
-        }
-    }
 
-    private void LoadTextureFromSystem(Pvr_ControllerVisual visual)
+    private void LoadTextureFromSystem(Pvr_ControllerVisual visual, string controllerName)
     {
-        var texturepath = modelFilePath + "controller" + controllerType + "s_idle.png";
+        string texFormat = (string)curControllerData["tex_format"];
+
+        var texturepath = modelFilePath + controllerName + "_idle." + texFormat;
         visual.m_idle = LoadOneTexture(texturepath);
-        texturepath = modelFilePath + "controller" + controllerType + "s_app.png";
+        texturepath = modelFilePath + controllerName + "_app." + texFormat;
         visual.m_app = LoadOneTexture(texturepath);
-        texturepath = modelFilePath + "controller" + controllerType + "s_home.png";
+        texturepath = modelFilePath + controllerName + "_home." + texFormat;
         visual.m_home = LoadOneTexture(texturepath);
-        texturepath = modelFilePath + "controller" + controllerType + "s_touchpad.png";
+        texturepath = modelFilePath + controllerName + "_touch." + texFormat;
         visual.m_touchpad = LoadOneTexture(texturepath);
-        texturepath = modelFilePath + "controller" + controllerType + "s_volumedown.png";
+        texturepath = modelFilePath + controllerName + "_volume_down." + texFormat;
         visual.m_volDn = LoadOneTexture(texturepath);
-        texturepath = modelFilePath + "controller" + controllerType + "s_volumeup.png";
-        visual.m_volUp= LoadOneTexture(texturepath);
-        if (Controller.UPvr_IsEnbleTrigger())
-        {
-            texturepath = modelFilePath + "controller" + controllerType + "s_trigger.png";
-            visual.m_trigger = LoadOneTexture(texturepath);
-        }
+        texturepath = modelFilePath + controllerName + "_volume_up." + texFormat;
+        visual.m_volUp = LoadOneTexture(texturepath);
+        texturepath = modelFilePath + controllerName + "_trigger." + texFormat;
+        visual.m_trigger = LoadOneTexture(texturepath);
+        texturepath = modelFilePath + controllerName + "_a." + texFormat;
+        visual.m_a = LoadOneTexture(texturepath);
+        texturepath = modelFilePath + controllerName + "_b." + texFormat;
+        visual.m_b = LoadOneTexture(texturepath);
+        texturepath = modelFilePath + controllerName + "_x." + texFormat;
+        visual.m_x = LoadOneTexture(texturepath);
+        texturepath = modelFilePath + controllerName + "_y." + texFormat;
+        visual.m_y = LoadOneTexture(texturepath);
+        texturepath = modelFilePath + controllerName + "_grip." + texFormat;
+        visual.m_grip = LoadOneTexture(texturepath);
     }
 
     private Texture2D LoadOneTexture(string filepath)
     {
-        var m_tex = new Texture2D(1024, 1024);
+        int t_w = (int)curControllerData["tex_width"];
+        int t_h = (int)curControllerData["tex_height"];
+        var m_tex = new Texture2D(t_w, t_h);
         m_tex.LoadImage(ReadPNG(filepath));
         return m_tex;
     }
+
     private byte[] ReadPNG(string path)
     {
         FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-
         fileStream.Seek(0, SeekOrigin.Begin);
-
         byte[] binary = new byte[fileStream.Length];
         fileStream.Read(binary, 0, (int)fileStream.Length);
-
         fileStream.Close();
-
         fileStream.Dispose();
-
         fileStream = null;
-
         return binary;
     }
 }

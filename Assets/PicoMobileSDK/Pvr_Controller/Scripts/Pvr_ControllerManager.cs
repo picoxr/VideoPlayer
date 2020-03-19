@@ -1,18 +1,10 @@
-﻿#if !UNITY_EDITOR
-#if UNITY_ANDROID
+﻿#if !UNITY_EDITOR && UNITY_ANDROID 
 #define ANDROID_DEVICE
-#elif UNITY_IPHONE
-#define IOS_DEVICE
-#elif UNITY_STANDALONE_WIN
-#define WIN_DEVICE
 #endif
-#endif
-
 
 using UnityEngine;
 using System;
 using System.Collections;
-using LitJson;
 using Pvr_UnitySDKAPI;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -47,7 +39,6 @@ public class Pvr_ControllerManager : MonoBehaviour
     private float cTime = 1.0f;
     private float longpresstime = 0.5f; 
     private bool stopConnect; 
-    private SystemLanguage localanguage;
     public Text toast;
     private bool controllerServicestate;
     private float disConnectTime;
@@ -134,7 +125,7 @@ public class Pvr_ControllerManager : MonoBehaviour
         }
         if (instance != this)
         {
-            Debug.LogError("instance object should be a singleton.");
+            PLOG.E("instance object should be a singleton.");
             return;
         }
         if (controllerlink == null)
@@ -149,166 +140,79 @@ public class Pvr_ControllerManager : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        localanguage = Application.systemLanguage;
-
+#if ANDROID_DEVICE
         if (controllerlink.trackingmode < 2)
         {
             Invoke("CheckControllerService", 10.0f);
         }
+#endif
     }
-    private void OnDestroy()
-    {
-        controllerlink.UnBindService();
-    }
-    // Update is called once per frame
     void Update()
     {
 #if UNITY_ANDROID
         if (controllerlink.neoserviceStarted)
         {
+            var fixedpose0 = controllerlink.GetControllerFixedSensorState(0);
             if (controllerlink.controller0Connected)
             {
+
                 var pose0 = controllerlink.GetCvControllerPoseData(0);
                 controllerlink.Controller0.Rotation = new Quaternion(pose0[0], pose0[1], pose0[2], pose0[3]);
                 controllerlink.Controller0.Position = new Vector3(pose0[4] / 1000.0f, pose0[5] / 1000.0f, -pose0[6] / 1000.0f);
-                
+
                 var key0 = controllerlink.GetCvControllerKeyData(0);
-                controllerlink.Controller0.TouchPadPosition = new Vector2(key0[0], key0[1]);
-
-                var keyleft = controllerlink.GetCV2ControllerKeyData(0);
-
-                SetSwipeData(controllerlink.Controller0);
-                
-                SetTouchPadClick(controllerlink.Controller0);
-               
-                TransformData(controllerlink.Controller0.Home, key0[2]);
-
-                TransformData(controllerlink.Controller0.App, key0[3]);
-                
-                TransformData(controllerlink.Controller0.Touch, key0[4]);
-              
-                TransformData(controllerlink.Controller0.VolumeUp, key0[5]);
-              
-                TransformData(controllerlink.Controller0.VolumeDown, key0[6]);
-
-                TransformData(controllerlink.Controller0.X, keyleft[0]);
-
-                TransformData(controllerlink.Controller0.Y, keyleft[1]);
-
-                //TransformData(controllerlink.Controller0.Left, keyleft[2]);
-
-                TransformData(controllerlink.Controller0.Left, keyleft[3]);
-
-                controllerlink.Controller0.TriggerNum = key0[7];
-                
-                SetTriggerClick(controllerlink.Controller0.Trigger, key0[7]);
-                
-                controllerlink.Controller0.Battery = key0[8];
+                Sensor.UPvr_SetReinPosition(fixedpose0[0], fixedpose0[1], fixedpose0[2], fixedpose0[3], fixedpose0[4], fixedpose0[5], fixedpose0[6], 0, true, Convert.ToInt32((Convert.ToString(key0[35]) + "000"), 2));
+                TransformData(controllerlink.Controller0, 0, key0);
             }
+            else
+            {
+                Sensor.UPvr_SetReinPosition(fixedpose0[0], fixedpose0[1], fixedpose0[2], fixedpose0[3], fixedpose0[4], fixedpose0[5], fixedpose0[6], 0, false,0);
+            }
+
+            var fixedpose1 = controllerlink.GetControllerFixedSensorState(1);
             if (controllerlink.controller1Connected)
             {
                 var pose1 = controllerlink.GetCvControllerPoseData(1);
                 controllerlink.Controller1.Rotation = new Quaternion(pose1[0], pose1[1], pose1[2], pose1[3]);
                 controllerlink.Controller1.Position = new Vector3(pose1[4] / 1000.0f, pose1[5] / 1000.0f, -pose1[6] / 1000.0f);
-                
+
                 var key1 = controllerlink.GetCvControllerKeyData(1);
-                controllerlink.Controller1.TouchPadPosition = new Vector2(key1[0], key1[1]);
-                
-                var keyright = controllerlink.GetCV2ControllerKeyData(1);
-
-                SetSwipeData(controllerlink.Controller1);
-             
-                SetTouchPadClick(controllerlink.Controller1);
-             
-                TransformData(controllerlink.Controller1.Home, key1[2]);
-              
-                TransformData(controllerlink.Controller1.App, key1[3]);
-              
-                TransformData(controllerlink.Controller1.Touch, key1[4]);
-                
-                TransformData(controllerlink.Controller1.VolumeUp, key1[5]);
-                
-                TransformData(controllerlink.Controller1.VolumeDown, key1[6]);
-
-                TransformData(controllerlink.Controller1.A, keyright[0]);
-
-                TransformData(controllerlink.Controller1.B, keyright[1]);
-
-                TransformData(controllerlink.Controller1.Right, keyright[2]);
-
-                //TransformData(controllerlink.Controller1.Right, keyright[3]);
-
-                controllerlink.Controller1.TriggerNum = key1[7];
-                
-                SetTriggerClick(controllerlink.Controller1.Trigger, key1[7]);
-               
-                controllerlink.Controller1.Battery = key1[8];
+                Sensor.UPvr_SetReinPosition(fixedpose0[0], fixedpose0[1], fixedpose0[2], fixedpose0[3], fixedpose1[4], fixedpose1[5], fixedpose1[6], 1, true, Convert.ToInt32((Convert.ToString(key1[35]) + "000"), 2));
+                TransformData(controllerlink.Controller1, 1, key1);
             }
-            
+            else
+            {
+                Sensor.UPvr_SetReinPosition(fixedpose0[0], fixedpose0[1], fixedpose0[2], fixedpose0[3], fixedpose1[4], fixedpose1[5], fixedpose1[6], 1, false,0);
+            }
         }
+
         //Goblin controller
         if (controllerlink.goblinserviceStarted && controllerlink.controller0Connected)
         {
             var pose0 = controllerlink.GetHBControllerPoseData();
-            var jpose = JsonMapper.ToObject(pose0);
-            controllerlink.Controller0.Rotation = new Quaternion(Convert.ToSingle(jpose[1].ToString()), Convert.ToSingle(jpose[2].ToString()), Convert.ToSingle(jpose[3].ToString()), Convert.ToSingle(jpose[0].ToString()));
-            PLOG.D("PvrLog GoblinController X:" + controllerlink.Controller0.Rotation.eulerAngles.x + " Y:" +
-                      controllerlink.Controller0.Rotation.eulerAngles.y + " Z:" +
-                      controllerlink.Controller0.Rotation.eulerAngles.z);
-           
+            controllerlink.Controller0.Rotation = new Quaternion(pose0[0], pose0[1], pose0[2], pose0[3]);
+
             var key0 = controllerlink.GetHBControllerKeyData();
-            var jkey = JsonMapper.ToObject(key0);
-            controllerlink.Controller0.TouchPadPosition = new Vector2(Convert.ToInt16(jkey[0].ToString()), Convert.ToInt16(jkey[1].ToString()));
-            
-            SetSwipeData(controllerlink.Controller0);
-            
-            SetTouchPadClick(controllerlink.Controller0);
-            
-            TransformData(controllerlink.Controller0.Home, Convert.ToInt16(jkey[2].ToString()));
-            
-            TransformData(controllerlink.Controller0.App, Convert.ToInt16(jkey[3].ToString()));
-            
-            TransformData(controllerlink.Controller0.Touch, Convert.ToInt16(jkey[4].ToString()));
-           
-            TransformData(controllerlink.Controller0.VolumeUp, Convert.ToInt16(jkey[5].ToString()));
-            
-            TransformData(controllerlink.Controller0.VolumeDown, Convert.ToInt16(jkey[6].ToString()));
-            
-            controllerlink.Controller0.Battery = Convert.ToInt16(jkey[7].ToString());
-            
-            TransformData(controllerlink.Controller0.Trigger, controllerlink.GetTriggerKeyEvent());
-            
+            TransformData(controllerlink.Controller0, 0, key0);
         }
-        
+
         SetSystemKey();
 #endif
     }
-    void OnApplicationQuit()
-    {
-        var headdof = Pvr_UnitySDKManager.SDK.HmdOnlyrot ? 0 : 1;
-        var handdof = Pvr_UnitySDKManager.SDK.ControllerOnlyrot ? 0 : 1;
-      
-        if (controllerlink.neoserviceStarted)
-        {
-            controllerlink.SetUnityVersionToJar(Pvr_UnitySDKAPI.System.UnitySDKVersion);
-            controllerlink.StopControllerThread(headdof, handdof);
-        }
-            
-    }
+
     private void OnApplicationPause(bool pause)
     {
         var headdof = Pvr_UnitySDKManager.SDK.HmdOnlyrot ? 0 : 1;
         var handdof = Pvr_UnitySDKManager.SDK.ControllerOnlyrot ? 0 : 1;
-        
+
         if (pause)
         {
             if (controllerlink.neoserviceStarted)
             {
                 controllerlink.SetGameObjectToJar("");
-                controllerlink.SetUnityVersionToJar(Pvr_UnitySDKAPI.System.UnitySDKVersion);
                 controllerlink.StopControllerThread(headdof, handdof);
             }
-            if(controllerlink.goblinserviceStarted)
+            if (controllerlink.goblinserviceStarted)
             {
                 controllerlink.StopLark2Receiver();
             }
@@ -320,6 +224,7 @@ public class Pvr_ControllerManager : MonoBehaviour
             if (controllerlink.neoserviceStarted)
             {
                 controllerlink.SetGameObjectToJar(controllerlink.gameobjname);
+                controllerlink.SetUnityVersionToJar(Pvr_UnitySDKAPI.System.UnitySDKVersion);
                 controllerlink.StartControllerThread(headdof, handdof);
             }
             if (controllerlink.goblinserviceStarted)
@@ -331,10 +236,29 @@ public class Pvr_ControllerManager : MonoBehaviour
             }
         }
     }
-    #endregion
+
+    private void OnDestroy()
+    {
+        controllerlink.UnBindService();
+    }
+    // Update is called once per frame
+    
+    void OnApplicationQuit()
+    {
+        var headdof = Pvr_UnitySDKManager.SDK.HmdOnlyrot ? 0 : 1;
+        var handdof = Pvr_UnitySDKManager.SDK.ControllerOnlyrot ? 0 : 1;
+      
+        if (controllerlink.neoserviceStarted)
+        {
+            controllerlink.StopControllerThread(headdof, handdof);
+        }
+            
+    }
+    
+#endregion
 
     /************************************ Public Interfaces  *********************************/
-    #region Public Interfaces
+#region Public Interfaces
 
    
     public void StopLark2Service()
@@ -377,8 +301,6 @@ public class Pvr_ControllerManager : MonoBehaviour
         {
             controllerlink.StartScan();
         }
-#elif IOS_DEVICE
-        TouchPad.ScanIOSBLEDevice(2);
 #endif
     }
     public void StopScan()
@@ -408,10 +330,7 @@ public class Pvr_ControllerManager : MonoBehaviour
         {
             controllerlink.ConnectBLE();
         }
-#elif IOS_DEVICE
-        TouchPad.ConnectIOSBLEDevice(controllerlink.hummingBirdMac);
 #endif
-
     }
     public void DisConnectBLE()
     {
@@ -479,6 +398,7 @@ public class Pvr_ControllerManager : MonoBehaviour
         controllerlink.hummingBirdRSSI = Convert.ToInt16(mac.Remove(0, 18));
         if (SetHbControllerMacEvent != null)
             SetHbControllerMacEvent(mac.Substring(0, 17));
+
     }
     public int GetControllerRSSI()
     {
@@ -520,13 +440,16 @@ public class Pvr_ControllerManager : MonoBehaviour
         }
         else if (Convert.ToInt16(state) == 1)
         {
+            controllerlink.SetUnityVersionToJar(Pvr_UnitySDKAPI.System.UnitySDKVersion);
             controllerlink.neoserviceStarted = true;
             var headdof = Pvr_UnitySDKManager.SDK.HmdOnlyrot ? 0 : 1;
             var handdof = Pvr_UnitySDKManager.SDK.ControllerOnlyrot ? 0 : 1;
             controllerlink.StartControllerThread(headdof, handdof);
             if (SetControllerServiceBindStateEvent != null)
                 SetControllerServiceBindStateEvent();
+
         }
+
     }
     public void setHbControllerConnectState(string isconnect)
     {
@@ -559,7 +482,7 @@ public class Pvr_ControllerManager : MonoBehaviour
             if (!controllerlink.controller0Connected)
             {
                 controllerlink.Controller0 = new ControllerHand();
-                controllerlink.Controller0.Position = new Vector3(-0.1f, -0.3f, 0.3f);
+                controllerlink.Controller0.Position = new Vector3(0, Pvr_UnitySDKManager.SDK.HeadPose.Position.y, 0) + new Vector3(-0.1f, -0.3f, 0.3f);
             }
                 
         }
@@ -569,7 +492,7 @@ public class Pvr_ControllerManager : MonoBehaviour
             if (!controllerlink.controller1Connected)
             {
                 controllerlink.Controller1 = new ControllerHand();
-                controllerlink.Controller1.Position = new Vector3(0.1f, -0.3f, 0.3f);
+                controllerlink.Controller1.Position = new Vector3(0, Pvr_UnitySDKManager.SDK.HeadPose.Position.y, 0) + new Vector3(0.1f, -0.3f, 0.3f);
             }   
         }
         if (Convert.ToBoolean(Convert.ToInt16(state.Substring(2, 1))))
@@ -577,12 +500,12 @@ public class Pvr_ControllerManager : MonoBehaviour
             controllerlink.controllerType = controllerlink.GetDeviceType();
             controllerlink.ResetController(controller);
         }
+        controllerlink.mainHandID = Controller.UPvr_GetMainHandNess();
         if (SetControllerStateChangedEvent != null)
             SetControllerStateChangedEvent(state);
         if (PvrControllerStateChangedEvent != null)
             PvrControllerStateChangedEvent(state);
 
-        controllerlink.mainHandID = Controller.UPvr_GetMainHandNess();
     }
  
     public void setControllerAbility(string data)
@@ -600,8 +523,6 @@ public class Pvr_ControllerManager : MonoBehaviour
     public void controllerThreadStartedCallback()
     {
         PLOG.I("PvrLog ThreadStartSuccess");
-
-        controllerlink.SetUnityVersionToJar(Pvr_UnitySDKAPI.System.UnitySDKVersion); 
         GetCVControllerState();
         if (ControllerThreadStartedCallbackEvent != null)
             ControllerThreadStartedCallbackEvent();
@@ -631,7 +552,7 @@ public class Pvr_ControllerManager : MonoBehaviour
     public void controllerUnbindCallback(string status)
     {
         PLOG.I("PvrLog ControllerUnBindCallBack" + status);
-        // status: 0- failure 1- success 
+        // status: 0- all unbind  1- unbind left 2-unbind right 
         if (ControllerUnbindCallbackEvent != null)
             ControllerUnbindCallbackEvent(status);
     }
@@ -729,32 +650,30 @@ public class Pvr_ControllerManager : MonoBehaviour
         //state = 0,Non-mobile platform, service is not started.
         //state = 1,The mobile platform, the service is not started, but the system will initiate the service.
         //state = 2,Mobile platform, service apk is not installed, need to install.
-        if (!Pvr_UnitySDKManager.SDK.IsViewerLogicFlow)
+        controllerServicestate = true;
+        if (Convert.ToInt16(state) == 0)
         {
-            controllerServicestate = true;
-            if (Convert.ToInt16(state) == 0)
-            {
-                ShowToast(0);
-            }
-            if (Convert.ToInt16(state) == 1)
-            {
-                BindService();
-            }
-            if (Convert.ToInt16(state) == 2)
-            {
-                ShowToast(1);
-            }
+            ShowToast(0);
+        }
+        if (Convert.ToInt16(state) == 1)
+        {
+            BindService();
+        }
+        if (Convert.ToInt16(state) == 2)
+        {
+            ShowToast(1);
         }
     }
   
     public void changeMainControllerCallback(string index)
     {
         PLOG.I("PvrLog MainControllerCallBack" + index);
+
+        controllerlink.mainHandID = Convert.ToInt16(index);
         //index = 0/1
         if (ChangeMainControllerCallBackEvent != null)
             ChangeMainControllerCallBackEvent(index);
 
-        controllerlink.mainHandID = Convert.ToInt16(index);
     }
 
     public void changeHandnessCallback(string index)
@@ -766,129 +685,48 @@ public class Pvr_ControllerManager : MonoBehaviour
 
     private void ShowToast(int type)
     {
-        if (!Pvr_UnitySDKManager.SDK.IsViewerLogicFlow)
+        if (toast != null)
         {
             switch (type)
             {
                 case 0:
-                    if (toast != null)
                     {
-                        if (localanguage == SystemLanguage.Chinese || localanguage == SystemLanguage.ChineseSimplified)
-                        {
-                            toast.text = "手柄服务未启动，请先启动手柄服务";
-                        }
-                        else if (localanguage == SystemLanguage.Japanese)
-                        {
-                            toast.text = "コントローラーサービスは起動していません、先ずコントローラーサービスを起動してください";
-                        }
-                        else if (localanguage == SystemLanguage.Korean)
-                        {
-                            toast.text = "컨트롤러 서비스가 작동되지 않았습니다. 먼저 컨트롤러 서비스를 작동해 주십시오";
-                        }
-                        else
-                        {
-                            toast.text = "No handle service found, please turnon the handle service first";
-                        }
-                        
+                        toast.text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("servicetip0");
                         Invoke("HideToast", 5.0f);
                     }
                     break;
                 case 1:
-                    if (toast != null)
                     {
-                        if (localanguage == SystemLanguage.Chinese || localanguage == SystemLanguage.ChineseSimplified)
-                        {
-                            toast.text = "未发现手柄服务，请使用PicoVR下载并安装";
-                        }
-                        else if (localanguage == SystemLanguage.Japanese)
-                        {
-                            toast.text = "コントローラーサービスが見つかりませんでした、PicoVRでダウンロードしてください";
-                        }
-                        else if (localanguage == SystemLanguage.Korean)
-                        {
-                            toast.text = "컨트롤러 서비스가 발견되지 않았습니다. PicoVR을 사용하여 다운로드 및 설치해 주십시오";
-                        }
-                        else
-                        {
-                            toast.text = "No handle service found, please use PicoVR to download and install";
-                        }
+                        toast.text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("servicetip1");
                         Invoke("HideToast", 5.0f);
                     }
                     break;
                 case 2:
-                    if (toast != null)
                     {
-                        if (localanguage == SystemLanguage.Chinese || localanguage == SystemLanguage.ChineseSimplified)
-                        {
-                            toast.text = "没有扫描到手柄，请确保手机蓝牙开启，并短按手柄Home键";
-                        }
-                        else if (localanguage == SystemLanguage.Japanese)
-                        {
-                            toast.text = "コントローラーサービスは起動していません、先ずコントローラーサービスを起動してください";
-                        }
-                        else if (localanguage == SystemLanguage.Korean)
-                        {
-                            toast.text = "컨트롤러 서비스가 작동되지 않았습니다. 먼저 컨트롤러 서비스를 작동해 주십시오";
-                        }
-                        else
-                        {
-                            toast.text = "Can not find any handle, please turn on bluetooth and press handle home key";
-                        }
+                        toast.text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("servicetip2");
                         AutoConnectHbController(6000);
                         Invoke("HideToast", 5.0f);
                     }
-
                     break;
                 case 3:
-                    if (toast != null)
                     {
-                        if (localanguage == SystemLanguage.Chinese || localanguage == SystemLanguage.ChineseSimplified)
-                        {
-                            toast.text = "扫描到多个手柄，请保持周围只有一个开启状态的手柄";
-                        }
-                        else if (localanguage == SystemLanguage.Japanese)
-                        {
-                            toast.text = "コントローラーサービスは起動していません、先ずコントローラーサービスを起動してください";
-                        }
-                        else if (localanguage == SystemLanguage.Korean)
-                        {
-                            toast.text = "컨트롤러 서비스가 작동되지 않았습니다. 먼저 컨트롤러 서비스를 작동해 주십시오";
-                        }
-                        else
-                        {
-                            toast.text = "Find more than one handle, turn off the unused handle";
-                        }
+                        toast.text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("servicetip3");
                         AutoConnectHbController(6000);
                         Invoke("HideToast", 5.0f);
                     }
                     break;
                 case 4:
-                    if (toast != null)
                     {
-                        if (localanguage == SystemLanguage.Chinese || localanguage == SystemLanguage.ChineseSimplified)
-                        {
-                            toast.text = "手柄服务启动异常，请检查后台权限及安全设置";
-                        }
-                        else if (localanguage == SystemLanguage.Japanese)
-                        {
-                            toast.text = "コントローラーサービスは起動していません、先ずコントローラーサービスを起動してください";
-                        }
-                        else if (localanguage == SystemLanguage.Korean)
-                        {
-                            toast.text = "컨트롤러 서비스가 작동되지 않았습니다. 먼저 컨트롤러 서비스를 작동해 주십시오";
-                        }
-                        else
-                        {
-                            toast.text = "The handle service starts abnormally. Please check the background permissions and security settings";
-                        }
+                        toast.text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("servicetip4");
+                        Invoke("HideToast", 10.0f);
                     }
                     break;
                 default:
                     return;
             }
         }
-
     }
+
     private void HideToast()
     {
         if (toast != null)
@@ -941,17 +779,13 @@ public class Pvr_ControllerManager : MonoBehaviour
         {
             if (Controller.UPvr_GetKeyLongPressed(0, Pvr_KeyCode.HOME) || Controller.UPvr_GetKeyLongPressed(1, Pvr_KeyCode.HOME))
             {
-                if (Pvr_UnitySDKManager.SDK.IsViewerLogicFlow)
+                if (Pvr_UnitySDKManager.SDK.HmdOnlyrot)
                 {
-                    Pvr_UnitySDKManager.pvr_UnitySDKSensor.ResetUnitySDKSensorAll();
+                    Pvr_UnitySDKManager.pvr_UnitySDKSensor.OptionalResetUnitySDKSensor(1, 0);
                 }
                 else
                 {
-                    if (Pvr_UnitySDKManager.SDK.HmdOnlyrot)
-                    {
-                        Pvr_UnitySDKManager.pvr_UnitySDKSensor.OptionalResetUnitySDKSensor(1, 0);
-                    }
-                    else
+                    if (Pvr_UnitySDKManager.SDK.safeToast != null)
                     {
                         if (controllerlink.trackingmode == 4)
                         {
@@ -971,13 +805,20 @@ public class Pvr_ControllerManager : MonoBehaviour
                             controllerlink.ResetHeadSensorForController();
                         }
                     }
-                    if (Pvr_UnitySDKManager.SDK.ControllerOnlyrot || controllerlink.controller0Connected && Controller.UPvr_GetControllerPOS(0).Equals(Vector3.zero) || controllerlink.controller1Connected && Controller.UPvr_GetControllerPOS(1).Equals(Vector3.zero))
+                    else
                     {
-                        if(Controller.UPvr_GetKeyLongPressed(0, Pvr_KeyCode.HOME))
-                            ResetController(0);
-                        if(Controller.UPvr_GetKeyLongPressed(1, Pvr_KeyCode.HOME))
-                            ResetController(1);
+                        if (controllerlink.trackingmode == 0 || controllerlink.trackingmode == 1)
+                        {
+                            Pvr_UnitySDKManager.pvr_UnitySDKSensor.ResetUnitySDKSensor();
+                        }
                     }
+                }
+                if (Pvr_UnitySDKManager.SDK.ControllerOnlyrot || controllerlink.controller0Connected && Controller.UPvr_GetControllerPOS(0).Equals(Vector3.zero) || controllerlink.controller1Connected && Controller.UPvr_GetControllerPOS(1).Equals(Vector3.zero))
+                {
+                    if (Controller.UPvr_GetKeyLongPressed(0, Pvr_KeyCode.HOME))
+                        ResetController(0);
+                    if (Controller.UPvr_GetKeyLongPressed(1, Pvr_KeyCode.HOME))
+                        ResetController(1);
                 }
             }
         }
@@ -985,16 +826,16 @@ public class Pvr_ControllerManager : MonoBehaviour
         {
             if (controllerlink.switchHomeKey)
             {
-                if (!controllerlink.Controller0.Home.LongPressedClock && Controller.UPvr_GetKeyUp(0, Pvr_KeyCode.HOME) || !controllerlink.Controller1.Home.LongPressedClock && Controller.UPvr_GetKeyUp(1, Pvr_KeyCode.HOME) && !stopConnect)
+                if (Controller.UPvr_GetKeyClick(0, Pvr_KeyCode.HOME) || Controller.UPvr_GetKeyClick(1, Pvr_KeyCode.HOME) && !stopConnect)
                 {
                     controllerlink.RebackToLauncher();
                 }
             }
-            if (!controllerlink.Controller0.VolumeUp.LongPressedClock && Controller.UPvr_GetKeyUp(0, Pvr_KeyCode.VOLUMEUP) || !controllerlink.Controller1.VolumeUp.LongPressedClock && Controller.UPvr_GetKeyUp(1, Pvr_KeyCode.VOLUMEUP))
+            if (Controller.UPvr_GetKeyClick(0, Pvr_KeyCode.VOLUMEUP) || Controller.UPvr_GetKeyClick(1, Pvr_KeyCode.VOLUMEUP))
             {
                 controllerlink.TurnUpVolume();
             }
-            if (!controllerlink.Controller0.VolumeDown.LongPressedClock && Controller.UPvr_GetKeyUp(0, Pvr_KeyCode.VOLUMEDOWN) || !controllerlink.Controller1.VolumeDown.LongPressedClock && Controller.UPvr_GetKeyUp(1, Pvr_KeyCode.VOLUMEDOWN))
+            if (Controller.UPvr_GetKeyClick(0, Pvr_KeyCode.VOLUMEDOWN) || Controller.UPvr_GetKeyClick(1, Pvr_KeyCode.VOLUMEDOWN))
             {
                 controllerlink.TurnDownVolume();
             }
@@ -1037,291 +878,116 @@ public class Pvr_ControllerManager : MonoBehaviour
         }
     }
 
-    private void SetSwipeData(ControllerHand hand)
+    /// <summary>
+    /// Data transformation, encapsulating key values as apis
+    /// </summary>
+    private void TransformData(ControllerHand hand, int handid, int[]data)
     {
-        if (controllerlink.controllerType == 4)
+        hand.TouchPadPosition.x = data[0];
+        hand.TouchPadPosition.y = data[5];
+
+        hand.Home.State =  Convert.ToBoolean(data[10]);
+        hand.Home.PressedDown = Convert.ToBoolean(data[11]);
+        hand.Home.PressedUp = Convert.ToBoolean(data[12]);
+        hand.Home.LongPressed = Convert.ToBoolean(data[13]);
+        hand.Home.Click = Convert.ToBoolean(data[14]);
+
+        hand.App.State = Convert.ToBoolean(data[15]);
+        hand.App.PressedDown = Convert.ToBoolean(data[16]);
+        hand.App.PressedUp = Convert.ToBoolean(data[17]);
+        hand.App.LongPressed = Convert.ToBoolean(data[18]);
+        hand.App.Click = Convert.ToBoolean(data[19]);
+
+        hand.Touch.State = Convert.ToBoolean(data[20]);
+        hand.Touch.PressedDown = Convert.ToBoolean(data[21]);
+        hand.Touch.PressedUp = Convert.ToBoolean(data[22]);
+        hand.Touch.LongPressed = Convert.ToBoolean(data[23]);
+        hand.Touch.Click = Convert.ToBoolean(data[24]);
+
+        hand.VolumeUp.State = Convert.ToBoolean(data[25]);
+        hand.VolumeUp.PressedDown = Convert.ToBoolean(data[26]);
+        hand.VolumeUp.PressedUp = Convert.ToBoolean(data[27]);
+        hand.VolumeUp.LongPressed = Convert.ToBoolean(data[28]);
+        hand.VolumeUp.Click = Convert.ToBoolean(data[29]);
+
+        hand.VolumeDown.State = Convert.ToBoolean(data[30]);
+        hand.VolumeDown.PressedDown = Convert.ToBoolean(data[31]);
+        hand.VolumeDown.PressedUp = Convert.ToBoolean(data[32]);
+        hand.VolumeDown.LongPressed = Convert.ToBoolean(data[33]);
+        hand.VolumeDown.Click = Convert.ToBoolean(data[34]);
+
+        if (controllerlink.goblinserviceStarted && !controllerlink.neoserviceStarted)
         {
-            if (hand.TouchPadPosition != new Vector2(128, 128))
-            {
-                if (!hand.touchClock)
-                {
-                    beginDT = DateTime.UtcNow;
-                    hand.touchDownPosition = hand.TouchPadPosition;
-                    hand.touchClock = true;
-                }
+            hand.TriggerNum = controllerlink.GetHBKeyValue();
+        }
 
-                hand.touchUpPosition = hand.TouchPadPosition;
-                if (hand.touchUpPosition.y >= 225)
-                {
-                    hand.SwipeDirectionState = SwipeDirection.SwipeRight;
-                    hand.rockerState = true;
-                }
-                else if (hand.touchUpPosition.y <= 30)
-                {
-                    hand.SwipeDirectionState = SwipeDirection.SwipeLeft;
-                    hand.rockerState = true;
-                }
-                else if (hand.touchUpPosition.x >= 225)
-                {
-                    hand.SwipeDirectionState = SwipeDirection.SwipeUp;
-                    hand.rockerState = true;
-                }
-                else if (hand.touchUpPosition.x <= 30)
-                {
-                    hand.SwipeDirectionState = SwipeDirection.SwipeDown;
-                    hand.rockerState = true;
-                }
-                else
-                {
-                    if (!hand.rockerState)
-                    {
-                        hand.SwipeDirectionState = SwipeDirection.No;
-                    }
-                }
-                rtime -= Time.deltaTime;
-                if (rtime <= 0)
-                {
-                    rtime = 0.5f;
-                    if (hand.touchUpPosition.y >= 225)
-                    {
-                        hand.SwipeDirection = SwipeDirection.SwipeRight;
-                    }
-                    else if (hand.touchUpPosition.y <= 30)
-                    {
-                        hand.SwipeDirection = SwipeDirection.SwipeLeft;
-                    }
-                    else if (hand.touchUpPosition.x >= 225)
-                    {
-                        hand.SwipeDirection = SwipeDirection.SwipeUp;
-                    }
-                    else if (hand.touchUpPosition.x <= 30)
-                    {
-                        hand.SwipeDirection = SwipeDirection.SwipeDown;
-                    }
-                    else
-                    {
-                        hand.SwipeDirection = SwipeDirection.No;
-                    }
-                }
-                else
-                {
-                    hand.SwipeDirection = SwipeDirection.No;
-                }
-            }
-            else
-            {
-                endDT = DateTime.UtcNow;
-                TimeSpan ts = endDT - beginDT;
-                if (Convert.ToInt64(ts.TotalMilliseconds) <= 500)
-                {
-                    if (hand.touchDownPosition != new Vector2(128, 128))
-                    {
-                        hand.SwipeDirection = hand.SwipeDirectionState;
-                    }
-                    else
-                    {
-                        hand.SwipeDirection = SwipeDirection.No;
-                    }
-                }
+        if (!controllerlink.goblinserviceStarted && controllerlink.neoserviceStarted)
+        {
+            hand.TriggerNum = controllerlink.GetCVTriggerValue(handid);
+        }
+        
+        hand.Trigger.State = Convert.ToBoolean(data[35]);
+        hand.Trigger.PressedDown = Convert.ToBoolean(data[36]);
+        hand.Trigger.PressedUp = Convert.ToBoolean(data[37]);
+        hand.Trigger.LongPressed = Convert.ToBoolean(data[38]);
+        hand.Trigger.Click = Convert.ToBoolean(data[39]);
 
-                rtime = 1.0f;
-                beginDT = DateTime.UtcNow;
-                hand.touchDownPosition = new Vector2(128,128);
-                hand.touchUpPosition = new Vector2(128, 128);
-                hand.touchClock = false;
-                hand.rockerState = false;
-            }
+        hand.Battery = data[40];
+
+        if (data.Length == 47)
+        {
+            hand.SwipeDirection = (SwipeDirection)data[45];
+            hand.TouchPadClick = (TouchPadClick)data[46];
         }
         else
         {
-            if (hand.TouchPadPosition != Vector2.zero)
+            if (handid == 0)
             {
-                if (!hand.touchClock)
-                {
-                    beginDT = DateTime.UtcNow;
+                hand.X.State = Convert.ToBoolean(data[45]);
+                hand.X.PressedDown = Convert.ToBoolean(data[46]);
+                hand.X.PressedUp = Convert.ToBoolean(data[47]);
+                hand.X.LongPressed = Convert.ToBoolean(data[48]);
+                hand.X.Click = Convert.ToBoolean(data[49]);
 
-                    hand.touchDownPosition = hand.TouchPadPosition;
-                    hand.touchClock = true;
-                }
-                hand.touchUpPosition = hand.TouchPadPosition;
+                hand.Y.State = Convert.ToBoolean(data[50]);
+                hand.Y.PressedDown = Convert.ToBoolean(data[51]);
+                hand.Y.PressedUp = Convert.ToBoolean(data[52]);
+                hand.Y.LongPressed = Convert.ToBoolean(data[53]);
+                hand.Y.Click = Convert.ToBoolean(data[54]);
+
+                hand.Left.State = Convert.ToBoolean(data[60]);
+                hand.Left.PressedDown = Convert.ToBoolean(data[61]);
+                hand.Left.PressedUp = Convert.ToBoolean(data[62]);
+                hand.Left.LongPressed = Convert.ToBoolean(data[63]);
+                hand.Left.Click = Convert.ToBoolean(data[64]);
             }
-            else
+
+            if (handid == 1)
             {
-                endDT = DateTime.UtcNow;
-                TimeSpan ts = endDT - beginDT;
-                if (Convert.ToInt64(ts.TotalMilliseconds) <= 270)
-                {
-                    hand.swipeData = hand.touchUpPosition - hand.touchDownPosition;
+                hand.A.State = Convert.ToBoolean(data[45]);
+                hand.A.PressedDown = Convert.ToBoolean(data[46]);
+                hand.A.PressedUp = Convert.ToBoolean(data[47]);
+                hand.A.LongPressed = Convert.ToBoolean(data[48]);
+                hand.A.Click = Convert.ToBoolean(data[49]);
 
-                    if (Mathf.Abs(hand.swipeData.x) > 10 && Mathf.Abs(hand.swipeData.y) > 10)
-                    {
-                        if (hand.swipeData.y / hand.swipeData.x >= 1.732)
-                        {
-                            hand.isVertical = false;
-                            hand.isHorizontal = true;
-                        }
-                        else
-                        {
-                            hand.isVertical = true;
-                            hand.isHorizontal = false;
-                        }
-                    }
-                    if (hand.swipeData.x > 0f && hand.isVertical)
-                    {
-                        hand.SwipeDirection = SwipeDirection.SwipeUp;
-                    }
-                    else if (hand.swipeData.x < 0f && hand.isVertical)
-                    {
-                        hand.SwipeDirection = SwipeDirection.SwipeDown;
-                    }
-                    else if (hand.swipeData.y > 0f && hand.isHorizontal)
-                    {
-                        hand.SwipeDirection = SwipeDirection.SwipeRight;
-                    }
-                    else if (hand.swipeData.y < 0f && hand.isHorizontal)
-                    {
-                        hand.SwipeDirection = SwipeDirection.SwipeLeft;
-                    }
-                    else
-                    {
-                        hand.SwipeDirection = SwipeDirection.No;
-                    }
-                }
-                beginDT = DateTime.UtcNow;
-                hand.touchDownPosition = Vector2.zero;
-                hand.touchUpPosition = Vector2.zero;
-                hand.touchClock = false;
+                hand.B.State = Convert.ToBoolean(data[50]);
+                hand.B.PressedDown = Convert.ToBoolean(data[51]);
+                hand.B.PressedUp = Convert.ToBoolean(data[52]);
+                hand.B.LongPressed = Convert.ToBoolean(data[53]);
+                hand.B.Click = Convert.ToBoolean(data[54]);
+
+                hand.Right.State = Convert.ToBoolean(data[55]);
+                hand.Right.PressedDown = Convert.ToBoolean(data[56]);
+                hand.Right.PressedUp = Convert.ToBoolean(data[57]);
+                hand.Right.LongPressed = Convert.ToBoolean(data[58]);
+                hand.Right.Click = Convert.ToBoolean(data[59]);
             }
+
+            hand.SwipeDirection = (SwipeDirection)data[65];
+            hand.TouchPadClick = (TouchPadClick) data[66];
         }
     }
 
-    private void SetTriggerClick(PvrControllerKey trigger,int value)
-    {
-        if (value >= 170)
-        {
-            trigger.PressedUp = false;
-            if (!trigger.State)
-            {
-                trigger.PressedDown = true;
-                trigger.LongPressedClock = false;
-            }
-            else
-            {
-                trigger.PressedDown = false;
-            }
-            trigger.State = true;
-        }
-        else
-        {
-            trigger.PressedUp = trigger.State;
-            trigger.State = false;
-            trigger.PressedDown = false;
-        }
-        if (trigger.State)
-        {
-            trigger.TimeCount += Time.deltaTime;
-            if (trigger.TimeCount >= longpresstime &&
-                !trigger.LongPressedClock)
-            {
-                trigger.LongPressed = true;
-                trigger.LongPressedClock = true;
-            }
-            else
-            {
-                trigger.LongPressed = false;
-            }
-        }
-        else
-        {
-            trigger.LongPressedClock = false;
-            trigger.TimeCount = 0;
-            trigger.LongPressed = false;
-        } 
-    }
-
-    private void SetTouchPadClick(ControllerHand hand)
-    {
-        if (hand.Touch.State)
-        {
-            if (hand.TouchPadPosition.x <= 255 && hand.TouchPadPosition.x >= 127f + 63.5f * Mathf.Sin(45) &&
-                hand.TouchPadPosition.y <= 127f + 63.5f * Mathf.Sin(45) &&
-                hand.TouchPadPosition.y >= 127f - 63.5f * Mathf.Sin(45))
-            {
-                hand.TouchPadClick = TouchPadClick.ClickUp;
-            }
-            else if (hand.TouchPadPosition.x > 0 && hand.TouchPadPosition.x <= 127f - 63.5f * Mathf.Sin(45) &&
-                     hand.TouchPadPosition.y <= 127f + 63.5f * Mathf.Sin(45) &&
-                     hand.TouchPadPosition.y >= 127f - 63.5f * Mathf.Sin(45))
-            {
-                hand.TouchPadClick = TouchPadClick.ClickDown;
-            }
-            else if (hand.TouchPadPosition.y > 0 && hand.TouchPadPosition.y <= 127f - 63.5f * Mathf.Sin(45) &&
-                     hand.TouchPadPosition.x <= 127f + 63.5f * Mathf.Sin(45) &&
-                     hand.TouchPadPosition.x >= 127f - 63.5f * Mathf.Sin(45))
-            {
-                hand.TouchPadClick = TouchPadClick.ClickLeft;
-            }
-            else if (hand.TouchPadPosition.y <= 255 && hand.TouchPadPosition.y >= 127f + 63.5f * Mathf.Sin(45) &&
-                     hand.TouchPadPosition.x <= 127f + 63.5f * Mathf.Sin(45) &&
-                     hand.TouchPadPosition.x >= 127f - 63.5f * Mathf.Sin(45))
-            {
-                hand.TouchPadClick = TouchPadClick.ClickRight;
-            }
-            else
-            {
-                hand.TouchPadClick = TouchPadClick.No;
-            }
-        }
-        else
-        {
-            hand.TouchPadClick = TouchPadClick.No;
-        }
-    }
-
-    private void TransformData(PvrControllerKey key, int keystate)
-    {
-        if (keystate == 1)
-        {
-            key.PressedUp = false;
-            if (!key.State)
-            {
-                key.PressedDown = true;
-                key.LongPressedClock = false;
-            }
-            else
-            {
-                key.PressedDown = false;
-            }
-            key.State = true;
-        }
-        else
-        {
-            key.PressedUp = key.State;
-            key.State = false;
-            key.PressedDown = false;
-        }
-        if (key.State)
-        {
-            key.TimeCount += Time.deltaTime;
-            if (key.TimeCount >= longpresstime &&
-                !key.LongPressedClock)
-            {
-                key.LongPressed = true;
-                key.LongPressedClock = true;
-            }
-            else
-            {
-                key.LongPressed = false;
-            }
-        }
-        else
-        {
-            key.TimeCount = 0;
-            key.LongPressed = false;
-        }
-    }
-
-
-    #endregion
+#endregion
 
 }

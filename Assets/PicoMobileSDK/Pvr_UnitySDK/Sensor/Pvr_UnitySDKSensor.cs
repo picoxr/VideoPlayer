@@ -1,5 +1,6 @@
 ﻿using Pvr_UnitySDKAPI;
 using UnityEngine;
+using System;
 
 public class Pvr_UnitySDKSensor
 {
@@ -16,21 +17,17 @@ public class Pvr_UnitySDKSensor
     public bool HMDUsing = true;
 
     bool SensorStart = false;
-
     bool SensorInit = false;
-
     bool Sensor6dofInit = false;
 
     Quaternion UnityQuaternion = Quaternion.identity;
-
     Vector3 EulerAngles = Vector3.zero;
-
     Vector3 UnityPosition = Vector3.zero;
 
     Pvr_UnitySDKAPI.Sensorindex sensorIndex = Pvr_UnitySDKAPI.Sensorindex.Default;
 
     private bool dofClock = false;
-
+    public static Action EyeFovChanged;
     #endregion
 
     /************************************   Public Interfaces **********************************/
@@ -58,7 +55,6 @@ public class Pvr_UnitySDKSensor
     }
     public bool InitUnitySDKSensor()
     {
-
         bool enable = false;
         try
         {
@@ -67,11 +63,12 @@ public class Pvr_UnitySDKSensor
         }
         catch (System.Exception e)
         {
-            Debug.LogError("InitUnitySDKSensor ERROR! " + e.Message);
+            PLOG.E("InitUnitySDKSensor ERROR! " + e.Message);
             throw;
         }
         return enable;
     }
+
     public bool InitUnitySDK6DofSensor()
     {
         bool enable = false;
@@ -98,7 +95,7 @@ public class Pvr_UnitySDKSensor
         }
         catch (System.Exception e)
         {
-            Debug.LogError("InitUnity6DofSDKSensor ERROR! " + e.Message);
+            PLOG.E("InitUnity6DofSDKSensor ERROR! " + e.Message);
             throw;
         }
         return enable;
@@ -114,7 +111,7 @@ public class Pvr_UnitySDKSensor
         }
         catch (System.Exception e)
         {
-            Debug.LogError("StartUnitySDKSensor ERROR! " + e.Message);
+            PLOG.E("StartUnitySDKSensor ERROR! " + e.Message);
             throw;
         }
         return enable;
@@ -131,7 +128,7 @@ public class Pvr_UnitySDKSensor
         }
         catch (System.Exception e)
         {
-            Debug.LogError("StopUnitySDKSensor ERROR! " + e.Message);
+            PLOG.E("StopUnitySDKSensor ERROR! " + e.Message);
             throw;
         }
         return enable;
@@ -145,36 +142,16 @@ public class Pvr_UnitySDKSensor
             if (Pvr_UnitySDKAPI.Sensor.UPvr_ResetSensor((int)sensorIndex) == 0)
             {
                 enable = true;
-                Debug.LogError("ResetUnitySDKSensor OK! ");
+                PLOG.E("ResetUnitySDKSensor OK! ");
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError("ResetUnitySDKSensor ERROR! " + e.Message);
+            PLOG.E("ResetUnitySDKSensor ERROR! " + e.Message);
             throw;
         }
         return enable;
     }
-
-    public bool ResetUnitySDKSensorAll()
-    {
-        bool enable = false;
-        try
-        {
-            if (Pvr_UnitySDKAPI.Sensor.UPvr_ResetSensorAll((int)sensorIndex) == 0)
-            {
-                enable = true;
-                Debug.LogError("ResetUnitySDKSensorAll OK! ");
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("ResetUnitySDKSensorAll ERROR! " + e.Message);
-            throw;
-        }
-        return enable;
-    }
-
 
     public bool OptionalResetUnitySDKSensor(int resetRot, int resetPos)
     {
@@ -188,12 +165,12 @@ public class Pvr_UnitySDKSensor
             if (Pvr_UnitySDKAPI.Sensor.UPvr_OptionalResetSensor((int)sensorIndex, resetRot, resetPos) == 0)
             {
                 enable = true;
-                Debug.LogError("OptionalResetUnitySDKSensor OK! ");
+                PLOG.I("PvrLog OptionalResetUnitySDKSensor OK!" + resetRot + resetPos);
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError("OptionalResetUnitySDKSensor ERROR! " + e.Message);
+            PLOG.E("OptionalResetUnitySDKSensor ERROR! " + e.Message);
             throw;
         }
         return enable;
@@ -204,16 +181,16 @@ public class Pvr_UnitySDKSensor
         bool enable = false;
         if (SensorInit && SensorStart)
         {
-            float fov = 102;
+            float vfov = 102, hfov = 102;
             float w = 0, x = 0, y = 0, z = 0, px = 0, py = 0, pz = 0;
             try
             {
-                int returns = Pvr_UnitySDKAPI.Sensor.UPvr_GetMainSensorState(ref x, ref y, ref z, ref w, ref px, ref py, ref pz, ref fov, ref Pvr_UnitySDKManager.SDK.RenderviewNumber);
+                int returns = Pvr_UnitySDKAPI.Sensor.UPvr_GetMainSensorState(ref x, ref y, ref z, ref w, ref px, ref py, ref pz, ref vfov, ref hfov, ref Pvr_UnitySDKManager.SDK.RenderviewNumber);
                 Pvr_UnitySDKManager.SDK.posStatus = Sensor.UPvr_Get6DofSensorQualityStatus();
                 PLOG.D("posStatus=" + Pvr_UnitySDKManager.SDK.posStatus);
                 if (returns == 0)
                 {
-                    if (Pvr_UnitySDKManager.SDK.posStatus != 3)
+                    if (!Convert.ToBoolean(Pvr_UnitySDKManager.SDK.posStatus & 0x2))
                     {
                         if (!dofClock)
                         {
@@ -231,38 +208,51 @@ public class Pvr_UnitySDKSensor
                             dofClock = false;
                         }
                     }
+
                     Pvr_UnitySDKManager.SDK.headData = new float[7] { x, y, z, w, px, py, pz };
                     UnityQuaternion = new Quaternion(x, y, -z, -w);
-                    Pvr_UnitySDKManager.SDK.EyeFov = fov;
+                    if (Pvr_UnitySDKManager.SDK.EyeVFoV != vfov)
+                    {
+                        Pvr_UnitySDKManager.SDK.EyeVFoV = vfov;
+                        if (EyeFovChanged != null)
+                        {
+                            EyeFovChanged();
+                        }
+                    }
+                    Pvr_UnitySDKManager.SDK.EyeHFoV = hfov;
+                    Pvr_UnitySDKManager.SDK.EyesAspect = hfov / vfov;
                     enable = true;
 
-                    if (Pvr_UnitySDKManager.SDK.PVRNeck)
+                    if (Pvr_UnitySDKManager.SDK.HmdOnlyrot)
                     {
-                        UnityPosition = UnityQuaternion * Pvr_UnitySDKManager.SDK.neckOffset -
-                                         Pvr_UnitySDKManager.SDK.neckOffset.y * Vector3.up;
+                        if (Pvr_UnitySDKManager.SDK.PVRNeck)
+                        {
+                            if (Pvr_UnitySDKManager.SDK.TrackingOrigin == TrackingOrigin.FloorLevel)
+                            {
+                                UnityPosition = new Vector3(0, py, 0) + UnityQuaternion * Pvr_UnitySDKManager.SDK.neckOffset -
+                                                Pvr_UnitySDKManager.SDK.neckOffset.y * Vector3.up;
+                            }
+                            else
+                            {
+                                UnityPosition = UnityQuaternion * Pvr_UnitySDKManager.SDK.neckOffset -
+                                                Pvr_UnitySDKManager.SDK.neckOffset.y * Vector3.up;
+                            }
+                        }
                     }
                     else
-                    {                      
+                    {
                         UnityPosition = new Vector3(px * Pvr_UnitySDKManager.SDK.MovingRatios, py * Pvr_UnitySDKManager.SDK.MovingRatios, -pz * Pvr_UnitySDKManager.SDK.MovingRatios);
                     }
-
-                    if (Pvr_UnitySDKManager.SDK.TrackingOrigin == TrackingOrigin.FloorLevel)
-                    {
-                        float posY = UnityPosition.y + Mathf.Abs(Pvr_UnitySDKAPI.BoundarySystem.UPvr_GetFloorHeight());
-                        UnityPosition.Set(UnityPosition.x, posY, UnityPosition.z);
-                    }
-
-                    PLOG.D("PvrLog 6DoFHead" + "Rotation" + x + y + -z + -w + "Position" + px + py + -pz + "eulerAngles" + UnityQuaternion.eulerAngles);
+                    PLOG.D("PvrLog 6DoFHead" + "Rotation:" + x + "," + y + "," + -z + "," + -w + "," + "Position:" + px + "," + py + "," + -pz + "," + "eulerAngles:" + UnityQuaternion.eulerAngles);
                 }
                 if (returns == -1)
-                    Debug.Log("sesnor update --- GetUnitySDKSensorState     -1    ");
+                    PLOG.I("PvrLog Sensor update --- GetUnitySDKSensorState  -1 ");
             }
             catch (System.Exception e)
             {
-                Debug.LogError("GetUnitySDKSensorState ERROR! " + e.Message);
+                PLOG.E("GetUnitySDKSensorState ERROR! " + e.Message);
                 throw;
             }
-
         }
         return enable;
     }
@@ -278,7 +268,7 @@ public class Pvr_UnitySDKSensor
         }
         catch (System.Exception e)
         {
-            Debug.LogError("GetUnitySDKPSensorState ERROR! " + e.Message);
+            PLOG.E("GetUnitySDKPSensorState ERROR! " + e.Message);
             throw;
         }
         return enable;

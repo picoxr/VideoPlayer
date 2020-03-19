@@ -92,7 +92,7 @@ public class Pvr_SDKSetting : EditorWindow
         EditorApplication.update -= Update;
     }
 
-    static bool IsIgnoreWindow()
+   public static bool IsIgnoreWindow()
     {
         string path = Pvr_SDKSetting.assetPath + typeof(CPicoSDKSettingAsset).ToString() + ".asset";
         if (File.Exists(path))
@@ -193,7 +193,7 @@ public class Pvr_SDKSetting : EditorWindow
 
     }
 
-    void OnClickApply()
+    public  void OnClickApply()
     {
         if (toggleVSync && QualitySettings.vSyncCount != recommended_vSyncCount)
         {
@@ -209,6 +209,7 @@ public class Pvr_SDKSetting : EditorWindow
         {
             Close();
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, recommended_BuildTarget);
+            EditorUserBuildSettings.selectedBuildTargetGroup = BuildTargetGroup.Android;
             ShowSettingWindow();
         }
     }
@@ -226,7 +227,7 @@ public class Pvr_SDKSetting : EditorWindow
         }
     }
 
-    static bool IsAllApplied()
+    public static bool IsAllApplied()
     {
         bool notApplied = (EditorUserBuildSettings.activeBuildTarget != recommended_BuildTarget) ||
                         (QualitySettings.vSyncCount != recommended_vSyncCount) ||

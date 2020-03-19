@@ -19,22 +19,22 @@ public class Pvr_ControllerEventsExamples : MonoBehaviour {
 
     private void UIPointerElementEnter(object sender,UIPointerEventArgs e)
     {
-        Debug.Log("UI Pointer entered" + e.currentTarget.name);
+        PLOG.I("UI Pointer entered" + e.currentTarget.name);
     }
     private void UIPointerElementExit(object sender, UIPointerEventArgs e)
     {
-        Debug.Log("UI Pointer exited" + e.currentTarget.name);
+        PLOG.I("UI Pointer exited" + e.currentTarget.name);
     }
     private void UIPointerElementClick(object sender, UIPointerEventArgs e)
     {
-        Debug.Log("UI Pointer clicked" + e.currentTarget.name);
+        PLOG.I("UI Pointer clicked" + e.currentTarget.name);
     }
     private void UIPointerElementDragStart(object sender, UIPointerEventArgs e)
     {
-        Debug.Log("UI Pointer started dragging" + e.currentTarget.name);
+        PLOG.I("UI Pointer started dragging" + e.currentTarget.name);
     }
     private void UIPointerElementDragEnd(object sender, UIPointerEventArgs e)
     {
-        Debug.Log("UI Pointer stopped dragging" + e.currentTarget.name);
+        PLOG.I("UI Pointer stopped dragging" + e.currentTarget.name);
     }
 }

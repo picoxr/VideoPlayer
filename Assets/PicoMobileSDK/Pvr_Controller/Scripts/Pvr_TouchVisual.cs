@@ -26,7 +26,7 @@ public class Pvr_TouchVisual : MonoBehaviour {
     {
         switch (currentDevice)
         {
-            case ControllerDevice.Goblin1:
+            case ControllerDevice.Goblin:
             {
                 if (Controller.UPvr_IsTouching(0))
                 {
@@ -60,7 +60,7 @@ public class Pvr_TouchVisual : MonoBehaviour {
                 if (Controller.UPvr_IsTouching(0))
                 {
                     touchRenderer.enabled = true;
-                        transform.localPosition = new Vector3(1.2f - Controller.UPvr_GetTouchPadPosition(hand).y * 0.01f, 1.6f, -1.7f - Controller.UPvr_GetTouchPadPosition(hand).x * 0.01f);
+                        transform.localPosition = new Vector3(1.3f - Controller.UPvr_GetTouchPadPosition(hand).y * 0.01f, 1.6f, -1.7f - Controller.UPvr_GetTouchPadPosition(hand).x * 0.01f);
                 }
                 else
                 {

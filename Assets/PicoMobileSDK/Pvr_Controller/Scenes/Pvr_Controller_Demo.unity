@@ -170,6 +170,16 @@ Prefab:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 114260068407493118, guid: 7e54d9a2dcc97dc419b5c5dc91827090,
+        type: 2}
+      propertyPath: m_grip
+      value: 
+      objectReference: {fileID: 2800000, guid: a6dbdf71d8d175a4db48683fd2a394bb, type: 3}
+    - target: {fileID: 114716436432430204, guid: 7e54d9a2dcc97dc419b5c5dc91827090,
+        type: 2}
+      propertyPath: m_grip
+      value: 
+      objectReference: {fileID: 2800000, guid: a6dbdf71d8d175a4db48683fd2a394bb, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 7e54d9a2dcc97dc419b5c5dc91827090, type: 2}
   m_IsPrefabParent: 0
@@ -205,7 +215,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1247140368
 Transform:
   m_ObjectHideFlags: 0
@@ -546,6 +556,22 @@ Prefab:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 11442420, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
+      propertyPath: rtSize.x
+      value: 2048
+      objectReference: {fileID: 0}
+    - target: {fileID: 11442420, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
+      propertyPath: rtSize.y
+      value: 2048
+      objectReference: {fileID: 0}
+    - target: {fileID: 11442420, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
+      propertyPath: customFPS
+      value: 99
+      objectReference: {fileID: 0}
+    - target: {fileID: 11442420, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
+      propertyPath: UseSinglePass
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 11464666, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
     - {fileID: 11429112, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
@@ -590,7 +616,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: 6a5ef4f25924d4b3fafb6943ffc42816, type: 2}
+  - {fileID: 2100000, guid: c95d7ec236299944fa448bef49b89484, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -706,7 +732,7 @@ MonoBehaviour:
   controller0: {fileID: 1576487192}
   controller1: {fileID: 1835767334}
   cube: {fileID: 1449465201}
-  normat: {fileID: 2100000, guid: 6a5ef4f25924d4b3fafb6943ffc42816, type: 2}
+  normat: {fileID: 2100000, guid: c95d7ec236299944fa448bef49b89484, type: 2}
   gazemat: {fileID: 2100000, guid: 3a2a4a14d26888e429bc4eb8b84f2374, type: 2}
   clickmat: {fileID: 2100000, guid: fa7a26ea01645ab46a89d62420f831b8, type: 2}
   rayDefaultLength: 4

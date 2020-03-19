@@ -1,11 +1,5 @@
-﻿#if !UNITY_EDITOR
-#if UNITY_ANDROID
+﻿#if !UNITY_EDITOR && UNITY_ANDROID 
 #define ANDROID_DEVICE
-#elif UNITY_IPHONE
-#define IOS_DEVICE
-#elif UNITY_STANDALONE_WIN
-#define WIN_DEVICE
-#endif
 #endif
 
 using UnityEngine;
@@ -18,7 +12,7 @@ public class Pvr_Controller : MonoBehaviour
 
     /************************************    Properties  *************************************/
     #region Properties
-        
+
     public GameObject controller0;
     public GameObject controller1;
     private static UserHandNess handness;
@@ -37,8 +31,7 @@ public class Pvr_Controller : MonoBehaviour
         DuringMotion,
         Always
     }
-    public ControllerAxis Axis;
-    public GazeType Gazetype;
+
     public enum ControllerAxis
     {
         Controller,
@@ -46,6 +39,10 @@ public class Pvr_Controller : MonoBehaviour
         Elbow,
         Shoulder
     }
+
+    public ControllerAxis Axis;
+    public GazeType Gazetype;
+    
     [Range(0.0f, 0.2f)]
     public float ElbowHeight = 0.0f;
     [Range(0.0f, 0.2f)]
@@ -53,8 +50,6 @@ public class Pvr_Controller : MonoBehaviour
     [Range(0.0f, 30.0f)]
     public float PointerTiltAngle = 15.0f;
 
-    private bool dataClock0;
-    private bool dataClock1;
     #endregion
 
     /*************************************  Unity API ****************************************/
@@ -76,6 +71,7 @@ public class Pvr_Controller : MonoBehaviour
             handness = UserHandNess.Right;
         }
     }
+
     void OnDestroy()
     {
         Pvr_ControllerManager.PvrServiceStartSuccessEvent -= ServiceStartSuccess;
@@ -126,6 +122,7 @@ public class Pvr_Controller : MonoBehaviour
         }
 
     }
+
     private void OnApplicationPause(bool pause)
     {
         if (!pause)
@@ -137,6 +134,7 @@ public class Pvr_Controller : MonoBehaviour
         }
         Invoke("ShowController", 0.1f);
     }
+
     private void ShowController()
     {
         if (controller0 != null)
@@ -144,6 +142,7 @@ public class Pvr_Controller : MonoBehaviour
         if (controller1 != null)
             controller1.transform.localScale = Vector3.one;
     }
+
     private void CheckControllerState(string data)
     {
         var state = Convert.ToBoolean(Convert.ToInt16(data.Substring(4, 1)));
@@ -167,8 +166,8 @@ public class Pvr_Controller : MonoBehaviour
 #if UNITY_EDITOR
         Quaternion controllerData = new Quaternion();
         controllerData = UpdateSimulatedFrameParams();        
-        if (controller0 != null)
-            controller0.transform.localRotation = controllerData;
+        if (controller1 != null)
+            controller1.transform.localRotation = controllerData;
 #else
         if (Pvr_UnitySDKManager.SDK.ControllerOnlyrot)
         {

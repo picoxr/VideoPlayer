@@ -10,7 +10,7 @@ public class playController : MonoBehaviour {
     public VideoPlayer videoPlayer;
     
 
-    public VideoClip videoClip;
+    //public VideoClip videoClip;
 
     
     public Button play;           

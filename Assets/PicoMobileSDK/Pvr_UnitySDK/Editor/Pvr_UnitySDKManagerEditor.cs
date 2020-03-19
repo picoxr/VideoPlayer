@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using Pvr_UnitySDKAPI;
+using System.Collections.Generic;
+using UnityEngine.Rendering;
+using System.Linq;
 
 [CustomEditor(typeof(Pvr_UnitySDKManager))]
 public class Pvr_UnitySDKManagerEditor : Editor
@@ -11,6 +14,7 @@ public class Pvr_UnitySDKManagerEditor : Editor
     static int QulityRtMass = 0;
     public delegate void Change(int Msaa);
     public static event Change MSAAChange;
+    public const string PVRSinglePassDefine = "PVR_SINGLEPASS_ENABLED";
     public override void OnInspectorGUI()
     {
         GUI.changed = false;
@@ -52,6 +56,7 @@ public class Pvr_UnitySDKManagerEditor : Editor
         GUILayout.Space(10);
         EditorGUILayout.LabelField("Pose Settings", firstLevelStyle);
         manager.TrackingOrigin = (TrackingOrigin)EditorGUILayout.EnumPopup("Tracking Origin", manager.TrackingOrigin);
+        manager.ResetTrackerOnLoad = EditorGUILayout.Toggle("Reset Tracker OnLoad", manager.ResetTrackerOnLoad);
         manager.Rotfoldout = EditorGUILayout.Foldout(manager.Rotfoldout, "Only Rotation Tracking");
         if (manager.Rotfoldout)
         {
@@ -67,10 +72,6 @@ public class Pvr_UnitySDKManagerEditor : Editor
                         manager.neckOffset = EditorGUILayout.Vector3Field("Neck Offset", manager.neckOffset);
                     }
                 }
-            }
-            else
-            {
-                manager.PVRNeck = false;
             }
             manager.ControllerOnlyrot =
                 EditorGUILayout.Toggle("  Only Controller Rotation Tracking", manager.ControllerOnlyrot);
@@ -89,6 +90,10 @@ public class Pvr_UnitySDKManagerEditor : Editor
         {
             manager.CustomRange = EditorGUILayout.FloatField("    Safe Radius(meters)", manager.CustomRange);
         }
+        else
+        {
+            manager.CustomRange = 0.8f;
+        }
 
         GUILayout.Space(10);
         EditorGUILayout.LabelField("Other Settings", firstLevelStyle);
@@ -102,6 +107,13 @@ public class Pvr_UnitySDKManagerEditor : Editor
         }
         manager.Monoscopic = EditorGUILayout.Toggle("Use Monoscopic", manager.Monoscopic);
         manager.Copyrightprotection = EditorGUILayout.Toggle("Copyright protection", manager.Copyrightprotection);
+        bool singlePass = manager.UseSinglePass;
+        manager.UseSinglePass = EditorGUILayout.Toggle("UseSinglePass", manager.UseSinglePass);
+        if (singlePass != manager.UseSinglePass)
+        {
+            SetSinglePass(manager.UseSinglePass);
+        }
+        manager.UseSinglePass = IsSinglePassEnable();
         if (GUI.changed)
         {
             QulityRtMass = (int)Pvr_UnitySDKManager.SDK.RtAntiAlising;
@@ -128,12 +140,105 @@ public class Pvr_UnitySDKManagerEditor : Editor
             }
             EditorUtility.SetDirty(manager);
 #if !UNITY_5_2
-            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager
-                .GetActiveScene());
+            if (!Application.isPlaying)
+            {
+                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+            }
 #endif
         }
 
         serializedObject.ApplyModifiedProperties();
+    }
+
+    private bool IsSinglePassEnable()
+    {
+        bool isSinglePass;
+#if UNITY_2017_2
+        isSinglePass = PlayerSettings.virtualRealitySupported;
+#else
+        isSinglePass = PlayerSettings.GetVirtualRealitySupported(BuildTargetGroup.Android);
+#endif
+        //List<string> allDefines = GetDefineSymbols(BuildTargetGroup.Android);
+        //isSinglePass &= allDefines.Contains(PVRSinglePassDefine);
+        isSinglePass &= PlayerSettings.stereoRenderingPath == StereoRenderingPath.SinglePass;
+        GraphicsDeviceType[] graphics = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
+        isSinglePass &= graphics[0] == GraphicsDeviceType.OpenGLES3;
+        return isSinglePass;
+    }
+
+    public void SetSinglePass(bool enable)
+    {
+        if (enable)
+        {
+            SetVRSupported(BuildTargetGroup.Android, true);
+            PlayerSettings.stereoRenderingPath = StereoRenderingPath.SinglePass;
+            //List<string> allDefines = GetDefineSymbols(BuildTargetGroup.Android);
+            //SetSinglePassDefine(BuildTargetGroup.Android, true, allDefines);
+            SetGraphicsAPI();
+        }
+        else
+        {
+            SetVRSupported(BuildTargetGroup.Android, false);
+            PlayerSettings.stereoRenderingPath = StereoRenderingPath.MultiPass;
+            //List<string> allDefines = GetDefineSymbols(BuildTargetGroup.Android);
+            //SetSinglePassDefine(BuildTargetGroup.Android, false, allDefines);
+        }
+    }
+
+    private void SetGraphicsAPI()
+    {
+        GraphicsDeviceType[] graphics = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
+        List<GraphicsDeviceType> listgraphic = graphics.ToList();
+        if (listgraphic.Contains(GraphicsDeviceType.OpenGLES3))
+        {
+            int index = listgraphic.IndexOf(GraphicsDeviceType.OpenGLES3);
+            GraphicsDeviceType temp = listgraphic[0];
+            listgraphic[0] = GraphicsDeviceType.OpenGLES3;
+            listgraphic[index] = temp;
+        }
+        else
+        {
+            listgraphic.Insert(0, GraphicsDeviceType.OpenGLES3);
+        }
+        PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, listgraphic.ToArray());
+    }
+
+    public static void SetVRSupported(BuildTargetGroup group, bool set)
+    {
+#if UNITY_2017_2
+        PlayerSettings.virtualRealitySupported = set; 
+#else
+        PlayerSettings.SetVirtualRealitySupported(group, set);
+#endif
+    }
+
+    public static List<string> GetDefineSymbols(BuildTargetGroup group)
+    {
+        string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
+        return symbols.Split(';').ToList();
+    }
+
+    public static void SetSinglePassDefine(BuildTargetGroup group, bool set, List<string> allDefines)
+    {
+        var hasDefine = allDefines.Contains(PVRSinglePassDefine);
+
+        if (set)
+        {
+            if (hasDefine)
+                return;
+            allDefines.Add(PVRSinglePassDefine);
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", allDefines.ToArray()));
+            Debug.Log("Add \"" + PVRSinglePassDefine + "\" to define symbols");
+        }
+        else
+        {
+            if (hasDefine)
+            {
+                allDefines.Remove(PVRSinglePassDefine);
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", allDefines.ToArray()));
+                Debug.Log("Remove \"" + PVRSinglePassDefine + "\" from define symbols");
+            }
+        }
     }
 
 }

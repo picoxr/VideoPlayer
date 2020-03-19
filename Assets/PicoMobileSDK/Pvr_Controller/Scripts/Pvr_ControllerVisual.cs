@@ -8,11 +8,11 @@ namespace Pvr_UnitySDKAPI
 {
     public enum ControllerDevice
     {
-        Goblin1,
+        Goblin,
         Neo,
         G2,
         Neo2,
-        NewController,
+        NewController
     }
 }
 
@@ -31,7 +31,7 @@ public class Pvr_ControllerVisual : MonoBehaviour
     public Texture2D m_b;
     public Texture2D m_x;
     public Texture2D m_y;
-    public Texture2D m_grab;
+    public Texture2D m_grip;
     
     private Renderer controllerRenderMat;
 
@@ -85,30 +85,30 @@ public class Pvr_ControllerVisual : MonoBehaviour
             controllerRenderMat.material.SetTexture("_MainTex", m_trigger);
             controllerRenderMat.material.SetTexture("_EmissionMap", m_trigger);
         }
-        else if(hand == 0 && Controller.UPvr_GetKey(hand, Pvr_KeyCode.X))
+        else if(Controller.UPvr_GetKey(hand, Pvr_KeyCode.X))
         {
             controllerRenderMat.material.SetTexture("_MainTex", m_x);
             controllerRenderMat.material.SetTexture("_EmissionMap", m_x);
         }
-        else if(hand == 0 && Controller.UPvr_GetKey(hand, Pvr_KeyCode.Y))
+        else if(Controller.UPvr_GetKey(hand, Pvr_KeyCode.Y))
         {
             controllerRenderMat.material.SetTexture("_MainTex", m_y);
             controllerRenderMat.material.SetTexture("_EmissionMap", m_y);
         }
-        else if (hand == 1 && Controller.UPvr_GetKey(hand, Pvr_KeyCode.A))
+        else if (Controller.UPvr_GetKey(hand, Pvr_KeyCode.A))
         {
             controllerRenderMat.material.SetTexture("_MainTex", m_a);
             controllerRenderMat.material.SetTexture("_EmissionMap", m_a);
         }
-        else if (hand == 1 && Controller.UPvr_GetKey(hand, Pvr_KeyCode.B))
+        else if (Controller.UPvr_GetKey(hand, Pvr_KeyCode.B))
         {
             controllerRenderMat.material.SetTexture("_MainTex", m_b);
             controllerRenderMat.material.SetTexture("_EmissionMap", m_b);
         }
         else if (Controller.UPvr_GetKey(hand, Pvr_KeyCode.Left) || Controller.UPvr_GetKey(hand, Pvr_KeyCode.Right))
         {
-            controllerRenderMat.material.SetTexture("_MainTex", m_grab);
-            controllerRenderMat.material.SetTexture("_EmissionMap", m_grab);
+            controllerRenderMat.material.SetTexture("_MainTex", m_grip);
+            controllerRenderMat.material.SetTexture("_EmissionMap", m_grip);
         }
         else
         {

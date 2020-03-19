@@ -1,4 +1,8 @@
-﻿using System;
+﻿#if !UNITY_EDITOR && UNITY_ANDROID 
+#define ANDROID_DEVICE
+#endif
+
+using System;
 using UnityEngine;
 using System.Collections;
 using Pvr_UnitySDKAPI;
@@ -27,6 +31,8 @@ public class Pvr_ControllerDemo : MonoBehaviour
     GameObject referenceObj;
     public float rayDefaultLength = 4;
     private bool isHasController = false;
+    private bool headcontrolmode = false;
+
     void Start()
     {
         ray = new Ray();
@@ -36,10 +42,13 @@ public class Pvr_ControllerDemo : MonoBehaviour
             Pvr_ControllerManager.SetControllerStateChangedEvent += ControllerStateListener;
             Pvr_ControllerManager.ControllerStatusChangeEvent += CheckControllerStateForGoblin;
             isHasController = true;
-        }
-#if UNITY_EDITOR 
-        currentController = controller0;
+#if UNITY_EDITOR
+            HeadSetController.SetActive(false);
+            currentController = controller1;
+            controller1.transform.Find("dot").gameObject.SetActive(true);
+            controller1.transform.Find("ray_alpha").gameObject.SetActive(true);
 #endif
+        }
         referenceObj = new GameObject("ReferenceObj");
     }
 
@@ -267,6 +276,26 @@ public class Pvr_ControllerDemo : MonoBehaviour
     private void CheckControllerStateForGoblin(string state)
     {
         HeadSetController.SetActive(!Convert.ToBoolean(Convert.ToInt16(state)));
+    }
+
+    public void SwitchControlMode()
+    {
+#if UNITY_EDITOR
+        if (headcontrolmode)
+        {
+            headcontrolmode = false;
+            HeadSetController.SetActive(false);
+            controller0.SetActive(true);
+            controller1.SetActive(true);
+        }
+        else
+        {
+            headcontrolmode = true;
+            HeadSetController.SetActive(true);
+            controller0.SetActive(false);
+            controller1.SetActive(false);
+        }
+#endif
     }
 
 }

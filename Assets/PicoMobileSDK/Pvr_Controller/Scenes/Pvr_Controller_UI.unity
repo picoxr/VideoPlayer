@@ -1097,7 +1097,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &166717431
 Transform:
   m_ObjectHideFlags: 0
@@ -2420,6 +2420,7 @@ GameObject:
   - component: {fileID: 322589342}
   - component: {fileID: 322589344}
   - component: {fileID: 322589339}
+  - component: {fileID: 322589345}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -2559,6 +2560,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clickOnPointerCollision: 0
   autoActivateWithinDistance: 0
+--- !u!114 &322589345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 322589337}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 702c704921b5abf4786866a5b87f46b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  HeadSetController: {fileID: 166717430}
+  controller0: {fileID: 707826093}
+  controller1: {fileID: 520639274}
+  cube: {fileID: 0}
+  normat: {fileID: 0}
+  gazemat: {fileID: 0}
+  clickmat: {fileID: 0}
+  rayDefaultLength: 4
 --- !u!1 &345763665
 GameObject:
   m_ObjectHideFlags: 0
@@ -4117,6 +4137,18 @@ Prefab:
       propertyPath: PVRNeck
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 11442420, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
+      propertyPath: defaultRenderTexture
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11442420, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
+      propertyPath: rtSize.x
+      value: 2048
+      objectReference: {fileID: 0}
+    - target: {fileID: 11442420, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
+      propertyPath: rtSize.y
+      value: 2048
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 11494788, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
     - {fileID: 11408450, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
@@ -4179,8 +4211,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: DisConnectBLE
+      - m_Target: {fileID: 322589345}
+        m_MethodName: SwitchControlMode
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -4242,7 +4274,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -118, y: 220}
-  m_SizeDelta: {x: 120, y: 40}
+  m_SizeDelta: {x: 157.55, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &669073234
 GameObject:
@@ -7292,18 +7324,18 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 3ce491b2c7e1ba34eaea7f55966df358, type: 3}
-    m_FontSize: 25
+    m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 7
+    m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: button
+  m_Text: Switch Control Mode
 --- !u!222 &1225294626
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7738,39 +7770,6 @@ CanvasRenderer:
     type: 2}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1284148880}
---- !u!1 &1312988766 stripped
-GameObject:
-  m_PrefabParentObject: {fileID: 152024, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
-  m_PrefabInternal: {fileID: 610532618}
---- !u!114 &1312988768
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1312988766}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b81a2561ece41014f88084aba2553028, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  clickOnPointerCollision: 0
-  autoActivateWithinDistance: 0
---- !u!114 &1312988773
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1312988766}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9cef51ad37c1de74eaf829c3980b128d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IgnoreReversedGraphics: 1
-  m_BlockingObjects: 0
-  m_BlockingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!1 &1314760828 stripped
 GameObject:
   m_PrefabParentObject: {fileID: 118676, guid: f4d2c95a82cadba4fb259ca17b5a8404, type: 2}
@@ -13895,27 +13894,3 @@ CanvasRenderer:
     type: 2}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 2118917176}
---- !u!1 &2122339118 stripped
-GameObject:
-  m_PrefabParentObject: {fileID: 1017990686937292, guid: 7e54d9a2dcc97dc419b5c5dc91827090,
-    type: 2}
-  m_PrefabInternal: {fileID: 747924735}
---- !u!114 &2122339120
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 2122339118}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 702c704921b5abf4786866a5b87f46b5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  HeadSetController: {fileID: 166717430}
-  controller0: {fileID: 707826093}
-  controller1: {fileID: 520639274}
-  cube: {fileID: 0}
-  normat: {fileID: 0}
-  gazemat: {fileID: 0}
-  clickmat: {fileID: 0}
-  rayDefaultLength: 4

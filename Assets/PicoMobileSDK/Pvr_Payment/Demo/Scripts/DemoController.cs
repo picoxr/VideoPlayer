@@ -87,18 +87,11 @@ public class DemoController : MonoBehaviour
 
     void OnClick(GameObject btnObj)
     {
-        if (Application.internetReachability == NetworkReachability.NotReachable)
-        {
-            GameObject.Find("MassageInfo").GetComponent<Text>().text = "{" +
-            "\"ret_code\":\"5000\",\n" +
-            "\"ret_msg\":\"NETWORK_ERROR\"" + "}";
-            return;
-        }
         switch (btnObj.name)
         {
             case "Login":
                 StartLoading();
-                PicoPaymentSDK.Login();
+                LoginSDK.Login();
                 break;
 
             case "PayOne":
@@ -125,7 +118,7 @@ public class DemoController : MonoBehaviour
 
             case "GetUserAPI":
                 StartLoading();
-                PicoPaymentSDK.GetUserAPI();
+                LoginSDK.GetUserAPI();
                 break;
 
         }

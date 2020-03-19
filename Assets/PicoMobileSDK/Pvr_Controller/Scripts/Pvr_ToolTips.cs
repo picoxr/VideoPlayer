@@ -12,11 +12,13 @@ public class Pvr_ToolTips : MonoBehaviour
         home,
         volup,
         voldown,
-        trigger
+        trigger,
+        grip
     }
     private ControllerDevice currentDevice;
     private float tipsAlpha;
-    
+    public static Pvr_ToolTips tooltips;
+
     public void ChangeTipsText(TipBtn tip, string key)
     {
         switch (tip)
@@ -51,88 +53,24 @@ public class Pvr_ToolTips : MonoBehaviour
                     transform.Find("triggertip/btn/Text").GetComponent<Text>().text = key;
                 }
                 break;
+            case TipBtn.grip:
+                {
+                    transform.Find("grip/btn/Text").GetComponent<Text>().text = key;
+                }
+                break;
         }
     }
 
-    void Start()
+    private void Awake()
     {
-        SystemLanguage localanguage = Application.systemLanguage;
-        currentDevice = transform.GetComponentInParent<Pvr_ControllerVisual>().currentDevice;
-        if (localanguage == SystemLanguage.Chinese || localanguage == SystemLanguage.ChineseSimplified || localanguage == SystemLanguage.ChineseTraditional)
-        {
-            transform.Find("apptip/btn/Text").GetComponent<Text>().text = "返回键";
-            transform.Find("touchtip/btn/Text").GetComponent<Text>().text = "确认键";
-            transform.Find("hometip/btn/Text").GetComponent<Text>().text = "Home键";
-
-            var volup = transform.Find("volup/btn/Text");
-            if (volup != null)
-                volup.GetComponent<Text>().text = "音量+";
-            var voldown = transform.Find("voldown/btn/Text");
-            if(voldown !=null)
-                voldown.GetComponent<Text>().text = "音量-";
-            var trigtip = transform.Find("triggertip/btn/Text");
-            if(trigtip != null)
-                trigtip.GetComponent<Text>().text = "扳机键";
-        }
-        if(localanguage == SystemLanguage.English)
-        {
-            transform.Find("apptip/btn/Text").GetComponent<Text>().text = "Back";
-            transform.Find("touchtip/btn/Text").GetComponent<Text>().text = "Confirm";
-            transform.Find("hometip/btn/Text").GetComponent<Text>().text = "Home";
-            var volup = transform.Find("volup/btn/Text");
-            if (volup != null)
-                volup.GetComponent<Text>().text = "Volume+";
-            var voldown = transform.Find("voldown/btn/Text");
-            if (voldown != null)
-                voldown.GetComponent<Text>().text = "Volume-";
-            var trigtip = transform.Find("triggertip/btn/Text");
-            if (trigtip != null)
-                trigtip.GetComponent<Text>().text = "Trigger";
-        }
-        if (localanguage == SystemLanguage.Korean)
-        {
-            transform.Find("apptip/btn/Text").GetComponent<Text>().text = "리턴 키";
-            transform.Find("touchtip/btn/Text").GetComponent<Text>().text = "확인 키";
-            transform.Find("hometip/btn/Text").GetComponent<Text>().text = "Home 키";
-            var volup = transform.Find("volup/btn/Text");
-            if (volup != null)
-                volup.GetComponent<Text>().text = "볼륨+";
-            var voldown = transform.Find("voldown/btn/Text");
-            if (voldown != null)
-                voldown.GetComponent<Text>().text = "볼륨-";
-            var trigtip = transform.Find("triggertip/btn/Text");
-            if (trigtip != null)
-                trigtip.GetComponent<Text>().text = "트리거 키";
-        }
-        if (localanguage == SystemLanguage.Japanese)
-        {
-            transform.Find("apptip/btn/Text").GetComponent<Text>().text = "バック";
-            transform.Find("touchtip/btn/Text").GetComponent<Text>().text = "確認";
-            transform.Find("hometip/btn/Text").GetComponent<Text>().text = "Home";
-            var volup = transform.Find("volup/btn/Text");
-            if (volup != null)
-                volup.GetComponent<Text>().text = "音量+";
-            var voldown = transform.Find("voldown/btn/Text");
-            if (voldown != null)
-                voldown.GetComponent<Text>().text = "音量-";
-            var trigtip = transform.Find("triggertip/btn/Text");
-            if (trigtip != null)
-                trigtip.GetComponent<Text>().text = "トリガー";
-        }
-
-
-    }
-    void OnApplicationPause(bool pause)
-    {
-        
+        tooltips = transform.GetComponent<Pvr_ToolTips>();
     }
 
     void Update()
     {
-
         switch (currentDevice)
         {
-            case Pvr_UnitySDKAPI.ControllerDevice.Goblin1:
+            case Pvr_UnitySDKAPI.ControllerDevice.Goblin:
             case Pvr_UnitySDKAPI.ControllerDevice.G2:
                 {
                     tipsAlpha = (330 - transform.parent.parent.parent.localRotation.eulerAngles.x) / 45.0f;
@@ -168,6 +106,32 @@ public class Pvr_ToolTips : MonoBehaviour
                 break;
         }
 
+    }
+
+    private void LoadTextFromJson()
+    {
+        currentDevice = transform.GetComponentInParent<Pvr_ControllerVisual>().currentDevice;
+        transform.Find("apptip/btn/Text").GetComponent<Text>().text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("apptip");
+        transform.Find("touchtip/btn/Text").GetComponent<Text>().text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("touchtip");
+        transform.Find("hometip/btn/Text").GetComponent<Text>().text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("hometip");
+
+        var volup = transform.Find("volup/btn/Text");
+        if (volup != null)
+            volup.GetComponent<Text>().text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("voluptip");
+        var voldown = transform.Find("voldown/btn/Text");
+        if (voldown != null)
+            voldown.GetComponent<Text>().text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("voldowntip");
+        var trigtip = transform.Find("triggertip/btn/Text");
+        if (trigtip != null)
+            trigtip.GetComponent<Text>().text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("triggertip");
+        var griptip = transform.Find("grip/btn/Text");
+        if (griptip != null)
+            griptip.GetComponent<Text>().text = Pvr_UnitySDKAPI.System.UPvr_GetLangString("griptip");
+    }
+
+    public static void RefreshTips()
+    {
+        tooltips.LoadTextFromJson();
     }
 }
 
