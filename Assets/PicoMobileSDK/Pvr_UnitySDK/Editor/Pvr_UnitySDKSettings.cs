@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using System.IO;
 using System.Xml;
 using System.Xml.Linq;
 using UnityEditor;
@@ -21,6 +24,8 @@ public class Pvr_UnitySDKQualitySettings
         Pvr_UnitySDKManagerEditor.HeadDofChangedEvent += UpdateXMLHeadDof;
 
 	    Pvr_UnitySDKManagerEditor.MSAAChange += UpdateXMLMsaa;
+
+        Pvr_UnitySDKManagerEditor.SetContentProtectXml += UpdateXMLContentProtect;
 
         PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
 
@@ -178,6 +183,46 @@ public class Pvr_UnitySDKQualitySettings
         {
             QualitySettings.IncreaseLevel(true);
             QualitySettings.vSyncCount = 0;
+        }
+    }
+    static void UpdateXMLContentProtect(string enable_cpt)
+    {
+        XNamespace android = "http://schemas.android.com/apk/res/android";
+        string m_sXmlPath = "Assets/Plugins/Android/AndroidManifest.xml";
+        if (File.Exists(m_sXmlPath))
+        {
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.Load(m_sXmlPath);
+            XmlNodeList nodeList;
+            XmlElement root = xmlDoc.DocumentElement;
+            nodeList = root.SelectNodes("/manifest/application/meta-data");
+            foreach (XmlNode node in nodeList)
+            {
+
+                if (node.Attributes.GetNamedItem("name", android.NamespaceName) != null)
+                {
+                    if (node.Attributes.GetNamedItem("name", android.NamespaceName).Value == "enable_cpt")
+                    {
+                        if (node.Attributes.GetNamedItem("value", android.NamespaceName).Value == enable_cpt)
+                        {
+                            PLOG.I("enable_cpt = " + enable_cpt);
+                        }
+                        else
+                        {
+                            node.Attributes.GetNamedItem("value", android.NamespaceName).Value = enable_cpt;
+                            xmlDoc.Save(m_sXmlPath);
+                        }
+                        return;
+                    }
+                }
+            }
+            XmlNode applicationNode = xmlDoc.SelectSingleNode("/manifest/application");
+            XmlElement xmlEle = xmlDoc.CreateElement("meta-data");
+            Debug.Log(android.NamespaceName.ToString());
+            xmlEle.SetAttribute("name", android.NamespaceName, "enable_cpt");
+            xmlEle.SetAttribute("value", android.NamespaceName, enable_cpt.ToString());
+            applicationNode.AppendChild(xmlEle);
+            xmlDoc.Save(m_sXmlPath);
         }
     }
 }

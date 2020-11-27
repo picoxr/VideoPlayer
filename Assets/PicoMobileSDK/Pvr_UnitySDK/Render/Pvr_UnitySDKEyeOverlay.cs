@@ -1,4 +1,7 @@
-﻿#if !UNITY_EDITOR && UNITY_ANDROID 
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+#if !UNITY_EDITOR && UNITY_ANDROID 
 #define ANDROID_DEVICE
 #endif
 
@@ -25,13 +28,23 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
 	public Vector3[] ModelTranslations = new Vector3[2];
 	public Quaternion[] CameraRotations = new Quaternion[2];
 	public Vector3[] CameraTranslations = new Vector3[2];
-    private Camera[] layerEyeCamera = new Camera[2];
+    public Camera[] layerEyeCamera = new Camera[2];
+
+    public bool overrideColorScaleAndOffset = false;
+    public Vector4 colorScale = Vector4.one;
+    public Vector4 colorOffset = Vector4.zero;
+
+    private Vector4 overlayLayerColorScaleDefault = Vector4.one;
+    private Vector4 overlayLayerColorOffsetDefault = Vector4.zero;
 
     public bool isExternalAndroidSurface = false;
     public IntPtr externalAndroidSurfaceObject = IntPtr.Zero;
     public delegate void ExternalAndroidSurfaceObjectCreated();
     // Will be called after externalAndroidSurfaceObject get created.
     public ExternalAndroidSurfaceObjectCreated externalAndroidSurfaceObjectCreated = null;
+
+    public OverlayTexFilterMode magTexFilterMode = OverlayTexFilterMode.NotCare;
+    public OverlayTexFilterMode minTexFilterMode = OverlayTexFilterMode.NotCare;
 
 
     public int CompareTo(Pvr_UnitySDKEyeOverlay other)
@@ -44,7 +57,7 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
     {
         Instances.Add(this);
 
-        if (Pvr_UnitySDKManager.StereoRenderPath == StereoRenderingPathPico.SinglePass)
+        if (Pvr_UnitySDKRender.Instance.StereoRenderPath == StereoRenderingPathPico.SinglePass)
         {
             this.layerEyeCamera[0] = Pvr_UnitySDKEyeManager.Instance.BothEyeCamera;
             this.layerEyeCamera[1] = Pvr_UnitySDKEyeManager.Instance.BothEyeCamera;
@@ -88,6 +101,28 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
         Instances.Remove(this);
     }
     #endregion
+
+    public void RefreshCamera()
+    {
+        if (Pvr_UnitySDKRender.Instance.StereoRenderPath == StereoRenderingPathPico.SinglePass)
+        {
+            this.layerEyeCamera[0] = Pvr_UnitySDKEyeManager.Instance.BothEyeCamera;
+            this.layerEyeCamera[1] = Pvr_UnitySDKEyeManager.Instance.BothEyeCamera;
+        }
+        else
+        {
+            if (Pvr_UnitySDKManager.SDK.Monoscopic)
+            {
+                this.layerEyeCamera[0] = Pvr_UnitySDKEyeManager.Instance.MonoEyeCamera;
+                this.layerEyeCamera[1] = Pvr_UnitySDKEyeManager.Instance.MonoEyeCamera;
+            }
+            else
+            {
+                this.layerEyeCamera[0] = Pvr_UnitySDKEyeManager.Instance.LeftEyeCamera;
+                this.layerEyeCamera[1] = Pvr_UnitySDKEyeManager.Instance.RightEyeCamera;
+            }
+        }
+    }
 
     private void InitializeBuffer()
     {
@@ -134,7 +169,7 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
             // update MV matrix
             for (int i = 0; i < this.MVMatrixs.Length; i++)
             {
-                if (Pvr_UnitySDKManager.StereoRenderPath == StereoRenderingPathPico.SinglePass)
+                if (Pvr_UnitySDKRender.Instance.StereoRenderPath == StereoRenderingPathPico.SinglePass)
                 {
                     Matrix4x4[] unity_StereoWorldToCamera = Pvr_UnitySDKSinglePass.GetStereoWorldToCameraMat();
                     this.MVMatrixs[i] = unity_StereoWorldToCamera[i] * this.layerTransform.localToWorldMatrix;
@@ -167,6 +202,35 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
         this.InitializeBuffer();
     }
 
+    /// <summary>
+    /// Override Color Scale
+    /// </summary>
+    /// <param name="scale">Scale that the color values</param>
+    /// <param name="offset">Offset that the color values</param>
+    public void SetLayerColorScaleAndOffset(Vector4 scale, Vector4 offset)
+    {
+        colorScale = scale;
+        colorOffset = offset;
+    }
+
+    public Vector4 GetLayerColorScale()
+    {
+        if (!this.overrideColorScaleAndOffset)
+        {
+            return this.overlayLayerColorScaleDefault;
+        }
+
+        return this.colorScale;
+    }
+
+    public Vector4 GetLayerColorOffset()
+    {
+        if (!this.overrideColorScaleAndOffset)
+        {
+            return this.overlayLayerColorOffsetDefault;
+        }
+        return this.colorOffset;
+    }
     #endregion
 
     public enum OverlayShape
@@ -181,5 +245,16 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
     {
         Overlay = 0,
         Underlay = 1
+    }
+
+    public enum OverlayTexFilterMode
+    {
+        NotCare = 0,
+        Nearest = 1,
+        Linear = 2,
+        Nearest_Mipmap_Nearest = 3,
+        Linear_Mipmap_Nearest = 4,
+        Nearest_Mipmap_Linear = 5,
+        Linear_Mipmap_Linear = 6
     }
 }

@@ -1,9 +1,27 @@
-﻿using Pvr_UnitySDKAPI;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using Pvr_UnitySDKAPI;
 using UnityEngine;
 using System;
 
 public class Pvr_UnitySDKSensor
 {
+
+    private static Pvr_UnitySDKSensor instance = null;
+    public static Pvr_UnitySDKSensor Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = new Pvr_UnitySDKSensor();
+            }
+
+            return instance;
+        }
+        set { instance = value; }
+    }
     public Pvr_UnitySDKSensor()
     {
         Init();
@@ -12,22 +30,19 @@ public class Pvr_UnitySDKSensor
     /************************************    Properties  *************************************/
     #region Properties
 
-    public Pvr_UnitySDKPose SensorValvue;
-
-    public bool HMDUsing = true;
-
     bool SensorStart = false;
     bool SensorInit = false;
-    bool Sensor6dofInit = false;
 
     Quaternion UnityQuaternion = Quaternion.identity;
-    Vector3 EulerAngles = Vector3.zero;
     Vector3 UnityPosition = Vector3.zero;
 
     Pvr_UnitySDKAPI.Sensorindex sensorIndex = Pvr_UnitySDKAPI.Sensorindex.Default;
 
     private bool dofClock = false;
     public static Action EyeFovChanged;
+
+    public Pvr_UnitySDKPose HeadPose;
+
     #endregion
 
     /************************************   Public Interfaces **********************************/
@@ -41,18 +56,20 @@ public class Pvr_UnitySDKSensor
 
     public void Init()
     {
-        Sensor6dofInit = InitUnitySDK6DofSensor();
+        InitUnitySDK6DofSensor();
         SensorInit = InitUnitySDKSensor();
         SensorStart = StartUnitySDKSensor();
+        HeadPose = new Pvr_UnitySDKPose(Vector3.zero, Quaternion.identity);
     }
 
     public void SensorUpdate()
     {
         if (GetUnitySDKSensorState())
         {
-            Pvr_UnitySDKManager.SDK.HeadPose = new Pvr_UnitySDKPose(UnityPosition, UnityQuaternion);
+            HeadPose.Set(UnityPosition, UnityQuaternion);
         }
     }
+
     public bool InitUnitySDKSensor()
     {
         bool enable = false;
@@ -72,6 +89,7 @@ public class Pvr_UnitySDKSensor
     public bool InitUnitySDK6DofSensor()
     {
         bool enable = false;
+#if !UNITY_EDITOR
         try
         {
             int ability6dof = 0;
@@ -90,7 +108,7 @@ public class Pvr_UnitySDKSensor
             }
             else
             {
-                Debug.LogWarning("This platform does NOT support 6 Dof ! ");
+                Debug.LogWarning("This platform does not support 6 Dof !");
             }
         }
         catch (System.Exception e)
@@ -98,6 +116,7 @@ public class Pvr_UnitySDKSensor
             PLOG.E("InitUnity6DofSDKSensor ERROR! " + e.Message);
             throw;
         }
+#endif
         return enable;
     }
 
@@ -158,36 +177,41 @@ public class Pvr_UnitySDKSensor
         bool enable = false;
         try
         {
-            if (!Pvr_UnitySDKManager.SDK.SixDofPosReset)
-            {
-                resetPos = 0;
-            }
             if (Pvr_UnitySDKAPI.Sensor.UPvr_OptionalResetSensor((int)sensorIndex, resetRot, resetPos) == 0)
             {
                 enable = true;
-                PLOG.I("PvrLog OptionalResetUnitySDKSensor OK!" + resetRot + resetPos);
+                Debug.Log("PvrLog OptionalResetUnitySDKSensor OK!" + resetRot + resetPos);
             }
         }
         catch (System.Exception e)
         {
-            PLOG.E("OptionalResetUnitySDKSensor ERROR! " + e.Message);
+            Debug.LogError("OptionalResetUnitySDKSensor ERROR! " + e.Message);
             throw;
         }
         return enable;
     }
 
+    float vfov = 102, hfov = 102;
+    float w = 0, x = 0, y = 0, z = 0, px = 0, py = 0, pz = 0;
     public bool GetUnitySDKSensorState()
     {
         bool enable = false;
         if (SensorInit && SensorStart)
         {
-            float vfov = 102, hfov = 102;
-            float w = 0, x = 0, y = 0, z = 0, px = 0, py = 0, pz = 0;
             try
             {
-                int returns = Pvr_UnitySDKAPI.Sensor.UPvr_GetMainSensorState(ref x, ref y, ref z, ref w, ref px, ref py, ref pz, ref vfov, ref hfov, ref Pvr_UnitySDKManager.SDK.RenderviewNumber);
+                int returns = -1;
+                if (Pvr_UnitySDKManager.SDK.ShowVideoSeethrough)
+                {
+                    BoundarySystem_Ext.Pvr_BoundarySystem.Instance.CameraFramePtr = BoundarySystem_Ext.Pvr_BoundaryAPI.UPvr_GetCameraData_Ext();
+                    returns = BoundarySystem_Ext.Pvr_BoundaryAPI.UPvr_GetMainSensorStateExt(ref x, ref y, ref z, ref w, ref px, ref py, ref pz, ref vfov, ref hfov, ref Pvr_UnitySDKRender.Instance.RenderviewNumber);
+                }
+                else
+                {
+                    returns = Pvr_UnitySDKAPI.Sensor.UPvr_GetMainSensorState(ref x, ref y, ref z, ref w, ref px, ref py, ref pz, ref vfov, ref hfov, ref Pvr_UnitySDKRender.Instance.RenderviewNumber);
+                }
+
                 Pvr_UnitySDKManager.SDK.posStatus = Sensor.UPvr_Get6DofSensorQualityStatus();
-                PLOG.D("posStatus=" + Pvr_UnitySDKManager.SDK.posStatus);
                 if (returns == 0)
                 {
                     if (!Convert.ToBoolean(Pvr_UnitySDKManager.SDK.posStatus & 0x2))
@@ -209,17 +233,17 @@ public class Pvr_UnitySDKSensor
                         }
                     }
 
-                    Pvr_UnitySDKManager.SDK.headData = new float[7] { x, y, z, w, px, py, pz };
-                    UnityQuaternion = new Quaternion(x, y, -z, -w);
-                    if (Pvr_UnitySDKManager.SDK.EyeVFoV != vfov)
+                    RefreshHeadData(x, y, z, w, px, py, pz);
+                    UnityQuaternion.Set(x, y, -z, -w);
+                    if (Pvr_UnitySDKRender.Instance.EyeVFoV != vfov)
                     {
-                        Pvr_UnitySDKManager.SDK.EyeVFoV = vfov;
+                        Pvr_UnitySDKRender.Instance.EyeVFoV = vfov;
                         if (EyeFovChanged != null)
                         {
                             EyeFovChanged();
                         }
                     }
-                    Pvr_UnitySDKManager.SDK.EyeHFoV = hfov;
+                    Pvr_UnitySDKRender.Instance.EyeHFoV = hfov;
                     Pvr_UnitySDKManager.SDK.EyesAspect = hfov / vfov;
                     enable = true;
 
@@ -229,7 +253,8 @@ public class Pvr_UnitySDKSensor
                         {
                             if (Pvr_UnitySDKManager.SDK.TrackingOrigin == TrackingOrigin.FloorLevel)
                             {
-                                UnityPosition = new Vector3(0, py, 0) + UnityQuaternion * Pvr_UnitySDKManager.SDK.neckOffset -
+                                UnityPosition.Set(0, py, 0);
+                                UnityPosition += UnityQuaternion * Pvr_UnitySDKManager.SDK.neckOffset -
                                                 Pvr_UnitySDKManager.SDK.neckOffset.y * Vector3.up;
                             }
                             else
@@ -241,9 +266,13 @@ public class Pvr_UnitySDKSensor
                     }
                     else
                     {
-                        UnityPosition = new Vector3(px * Pvr_UnitySDKManager.SDK.MovingRatios, py * Pvr_UnitySDKManager.SDK.MovingRatios, -pz * Pvr_UnitySDKManager.SDK.MovingRatios);
+                        UnityPosition.Set(px, py, -pz);
                     }
-                    PLOG.D("PvrLog 6DoFHead" + "Rotation:" + x + "," + y + "," + -z + "," + -w + "," + "Position:" + px + "," + py + "," + -pz + "," + "eulerAngles:" + UnityQuaternion.eulerAngles);
+                    if (PLOG.logLevel > 2)
+                    {
+                        PLOG.D("posStatus=" + Pvr_UnitySDKManager.SDK.posStatus);
+                        PLOG.D("PvrLog 6DoFHead" + "Rotation:" + x + "," + y + "," + -z + "," + -w + "," + "Position:" + px + "," + py + "," + -pz + "," + "eulerAngles:" + UnityQuaternion.eulerAngles);
+                    }
                 }
                 if (returns == -1)
                     PLOG.I("PvrLog Sensor update --- GetUnitySDKSensorState  -1 ");
@@ -272,6 +301,17 @@ public class Pvr_UnitySDKSensor
             throw;
         }
         return enable;
+    }
+
+    private void RefreshHeadData(float x, float y, float z, float w, float px, float py, float pz)
+    {
+        Pvr_UnitySDKManager.SDK.headData[0] = x;
+        Pvr_UnitySDKManager.SDK.headData[1] = y;
+        Pvr_UnitySDKManager.SDK.headData[2] = z;
+        Pvr_UnitySDKManager.SDK.headData[3] = w;
+        Pvr_UnitySDKManager.SDK.headData[4] = px;
+        Pvr_UnitySDKManager.SDK.headData[5] = py;
+        Pvr_UnitySDKManager.SDK.headData[6] = pz;
     }
 
     #endregion

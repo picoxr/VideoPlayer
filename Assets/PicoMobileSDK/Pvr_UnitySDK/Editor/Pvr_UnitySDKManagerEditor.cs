@@ -1,12 +1,16 @@
-﻿using UnityEngine;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using UnityEngine;
 using UnityEditor;
 using Pvr_UnitySDKAPI;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 using System.Linq;
+using UnityEditor.Build;
 
 [CustomEditor(typeof(Pvr_UnitySDKManager))]
-public class Pvr_UnitySDKManagerEditor : Editor
+public class Pvr_UnitySDKManagerEditor : Editor, IPreprocessBuild
 {
     public delegate void HeadDofChanged(string dof);
     public static event HeadDofChanged HeadDofChangedEvent;
@@ -15,6 +19,12 @@ public class Pvr_UnitySDKManagerEditor : Editor
     public delegate void Change(int Msaa);
     public static event Change MSAAChange;
     public const string PVRSinglePassDefine = "PVR_SINGLEPASS_ENABLED";
+    
+    public delegate void SetContentProtect(string enable_cpt);
+    public static event SetContentProtect SetContentProtectXml;
+
+    private bool resetNeckOffset = false;
+
     public override void OnInspectorGUI()
     {
         GUI.changed = false;
@@ -25,7 +35,10 @@ public class Pvr_UnitySDKManagerEditor : Editor
         firstLevelStyle.fontSize = 12;
         firstLevelStyle.wordWrap = true;
 
+        var guiContent = new GUIContent();
+
         Pvr_UnitySDKManager manager = (Pvr_UnitySDKManager)target;
+        Pvr_UnitySDKProjectSetting projectConfig = Pvr_UnitySDKProjectSetting.GetProjectConfig();
 
         GUILayout.Space(10);
         EditorGUILayout.LabelField("Current Build Platform", firstLevelStyle);
@@ -33,19 +46,21 @@ public class Pvr_UnitySDKManagerEditor : Editor
         GUILayout.Space(10);
 
         EditorGUILayout.LabelField("RenderTexture Setting", firstLevelStyle);
-        manager.RtAntiAlising = (RenderTextureAntiAliasing)EditorGUILayout.EnumPopup("RenderTexture Anti-Aliasing", manager.RtAntiAlising);
+        projectConfig.rtAntiAlising = (RenderTextureAntiAliasing)EditorGUILayout.EnumPopup("RenderTexture Anti-Aliasing", projectConfig.rtAntiAlising);
 #if UNITY_2018_3_OR_NEWER
         GUI.enabled = false;
 #endif
-        manager.RtBitDepth = (RenderTextureDepth)EditorGUILayout.EnumPopup("RenderTexture Bit Depth", manager.RtBitDepth);
-        manager.RtFormat = (RenderTextureFormat)EditorGUILayout.EnumPopup("RenderTexture Format", manager.RtFormat);
+        projectConfig.rtBitDepth = (RenderTextureDepth)EditorGUILayout.EnumPopup("RenderTexture Bit Depth", projectConfig.rtBitDepth);
+        projectConfig.rtFormat = (RenderTextureFormat)EditorGUILayout.EnumPopup("RenderTexture Format", projectConfig.rtFormat);
 #if UNITY_2018_3_OR_NEWER
         GUI.enabled = true;
 #endif
-        manager.DefaultRenderTexture = EditorGUILayout.Toggle("Use Default RenderTexture", manager.DefaultRenderTexture);
-        if (!manager.DefaultRenderTexture)
+        guiContent.text = "Use Default RenderTexture";
+        guiContent.tooltip = "If false，you can define customed size of Render Texture, and effect for all scenes.";
+        projectConfig.usedefaultRenderTexture = EditorGUILayout.Toggle(guiContent, projectConfig.usedefaultRenderTexture);
+        if (!projectConfig.usedefaultRenderTexture)
         {
-            manager.RtSize = EditorGUILayout.Vector2Field("    RT Size", manager.RtSize);
+            projectConfig.customRTSize = EditorGUILayout.Vector2Field("    RT Size", projectConfig.customRTSize);
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField("Note:", firstLevelStyle);
             EditorGUILayout.LabelField("1.width & height must be larger than 0;");
@@ -55,68 +70,103 @@ public class Pvr_UnitySDKManagerEditor : Editor
 
         GUILayout.Space(10);
         EditorGUILayout.LabelField("Pose Settings", firstLevelStyle);
-        manager.TrackingOrigin = (TrackingOrigin)EditorGUILayout.EnumPopup("Tracking Origin", manager.TrackingOrigin);
-        manager.ResetTrackerOnLoad = EditorGUILayout.Toggle("Reset Tracker OnLoad", manager.ResetTrackerOnLoad);
-        manager.Rotfoldout = EditorGUILayout.Foldout(manager.Rotfoldout, "Only Rotation Tracking");
+
+        guiContent.text = "Tracking Origin";
+        guiContent.tooltip = "Define the current tracking origin type.";
+        manager.TrackingOrigin = (TrackingOrigin)EditorGUILayout.EnumPopup(guiContent, manager.TrackingOrigin);
+
+        guiContent.text = "Reset Tracker OnLoad";
+        guiContent.tooltip = "If true, each scene load will cause the head pose to reset.";
+        manager.ResetTrackerOnLoad = EditorGUILayout.Toggle(guiContent, manager.ResetTrackerOnLoad);
+
+        guiContent.text = "Only Rotation Tracking";
+        guiContent.tooltip = "If true，tracking will not affect the position of specified target.";
+        manager.Rotfoldout = EditorGUILayout.Foldout(manager.Rotfoldout, guiContent, true);
         if (manager.Rotfoldout)
         {
-            manager.HmdOnlyrot = EditorGUILayout.Toggle("  Only HMD Rotation Tracking", manager.HmdOnlyrot);
+            guiContent.text = "  Only HMD Rotation Tracking";
+            guiContent.tooltip = "If true, head tracking will not affect the position of each Pvr_UnitySDK's cameras, and just act in three DOF mode.";
+            manager.HmdOnlyrot = EditorGUILayout.Toggle(guiContent, manager.HmdOnlyrot);
             if (manager.HmdOnlyrot)
             {
                 manager.PVRNeck = EditorGUILayout.Toggle("    Enable Neck Model", manager.PVRNeck);
                 if (manager.PVRNeck)
                 {
-                    manager.UseCustomNeckPara = EditorGUILayout.Toggle("Use Custom Neck Parameters", manager.UseCustomNeckPara);
-                    if (manager.UseCustomNeckPara)
+                    manager.neckOffset = EditorGUILayout.Vector3Field("Neck Offset", manager.neckOffset);
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(100);
+                    resetNeckOffset = GUILayout.Button("Use Default Neck Offset");
+                    GUILayout.EndHorizontal();
+                    if (resetNeckOffset)
                     {
-                        manager.neckOffset = EditorGUILayout.Vector3Field("Neck Offset", manager.neckOffset);
+                        manager.neckOffset = new Vector3(0, 0.075f, 0.0805f);
+                        manager.UseCustomNeckPara = false;
                     }
                 }
             }
+            else
+            {
+                manager.UseCustomNeckPara = false;
+            }
+            guiContent.text = "  Only Controller Rotation Tracking";
+            guiContent.tooltip = "If true, hand tracking will not affect the position of controller(s).It will just act in three DOF mode.";
             manager.ControllerOnlyrot =
-                EditorGUILayout.Toggle("  Only Controller Rotation Tracking", manager.ControllerOnlyrot);
+                EditorGUILayout.Toggle(guiContent, manager.ControllerOnlyrot);
         }
         else
         {
             manager.HmdOnlyrot = false;
             manager.ControllerOnlyrot = false;
-        }
-        
-        manager.MovingRatios = EditorGUILayout.FloatField("Position ScaleFactor", manager.MovingRatios);
-        manager.SixDofPosReset = EditorGUILayout.Toggle("Enable 6Dof Position Reset", manager.SixDofPosReset);
-
-        manager.DefaultRange = EditorGUILayout.Toggle("Use Default Safe Radius", manager.DefaultRange);
-        if (!manager.DefaultRange)
-        {
-            manager.CustomRange = EditorGUILayout.FloatField("    Safe Radius(meters)", manager.CustomRange);
-        }
-        else
-        {
-            manager.CustomRange = 0.8f;
+            manager.UseCustomNeckPara = false;
         }
 
         GUILayout.Space(10);
         EditorGUILayout.LabelField("Other Settings", firstLevelStyle);
-        manager.ShowFPS = EditorGUILayout.Toggle("Show FPS", manager.ShowFPS);
-        manager.ShowSafePanel = EditorGUILayout.Toggle("Show SafePanel", manager.ShowSafePanel);
-        manager.ScreenFade = EditorGUILayout.Toggle("Open Screen Fade", manager.ScreenFade);
-        manager.DefaultFPS = EditorGUILayout.Toggle("Use Default FPS", manager.DefaultFPS);
-        if (!manager.DefaultFPS)
+
+        guiContent.text = "Show FPS";
+        guiContent.tooltip = "If true，display FPS on Overlay.";
+        manager.ShowFPS = EditorGUILayout.Toggle(guiContent, manager.ShowFPS);
+
+        guiContent.text = "Use Default FPS";
+        guiContent.tooltip = "If false, you can define upper limit of FPS.";
+        projectConfig.usedefaultfps = EditorGUILayout.Toggle(guiContent, projectConfig.usedefaultfps);
+        if (!projectConfig.usedefaultfps)
         {
-            manager.CustomFPS = EditorGUILayout.IntField("    FPS", manager.CustomFPS);
+            projectConfig.customfps = EditorGUILayout.IntField("    FPS", projectConfig.customfps);
         }
-        manager.Monoscopic = EditorGUILayout.Toggle("Use Monoscopic", manager.Monoscopic);
-        manager.Copyrightprotection = EditorGUILayout.Toggle("Copyright protection", manager.Copyrightprotection);
-        bool singlePass = manager.UseSinglePass;
-        manager.UseSinglePass = EditorGUILayout.Toggle("UseSinglePass", manager.UseSinglePass);
-        if (singlePass != manager.UseSinglePass)
+
+        EditorGUI.BeginDisabledGroup(projectConfig.usesinglepass);
+        guiContent.text = "Use Monoscopic";
+        guiContent.tooltip = "If true, both eyes will be rendered with same image  from the center eye pose, which will reduce GPU load.";
+        manager.Monoscopic = EditorGUILayout.Toggle(guiContent, manager.Monoscopic);
+        EditorGUI.EndDisabledGroup();
+
+        EditorGUI.BeginDisabledGroup(manager.Monoscopic);
+        guiContent.text = "Use SinglePass";
+        guiContent.tooltip = "If true, objects are rendered once to the left eye buffer, then duplicated to the right buffer automatically with appropriate modifications. It primarily reduces CPU usage.";
+        projectConfig.usesinglepass = EditorGUILayout.Toggle(guiContent, projectConfig.usesinglepass);
+        if (projectConfig.usesinglepass != IsSinglePassEnable())
         {
-            SetSinglePass(manager.UseSinglePass);
+            SetSinglePass(projectConfig.usesinglepass);
         }
-        manager.UseSinglePass = IsSinglePassEnable();
+        EditorGUI.EndDisabledGroup();
+
+        guiContent.text = "Use Content Protect";
+        guiContent.tooltip = "If true, content will not be recorded or casted illegally.";
+        projectConfig.usecontentprotect = EditorGUILayout.Toggle(guiContent, projectConfig.usecontentprotect);
+        if (projectConfig.usecontentprotect)
+        {
+
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Note:", firstLevelStyle);
+            EditorGUILayout.LabelField("This is Content Protect,if checked:");
+            EditorGUILayout.LabelField("Screen Shot & Screen Recording & Screen Cast CANNOT work");
+            EditorGUILayout.EndVertical();
+        }
+
         if (GUI.changed)
         {
-            QulityRtMass = (int)Pvr_UnitySDKManager.SDK.RtAntiAlising;
+            QulityRtMass = (int)projectConfig.rtAntiAlising;
             if (QulityRtMass == 1)
             {
                 QulityRtMass = 0;
@@ -138,7 +188,24 @@ public class Pvr_UnitySDKManagerEditor : Editor
                 }
 
             }
+            if (SetContentProtectXml != null)
+            {
+                if (projectConfig.usecontentprotect)
+                    SetContentProtectXml("1");
+                else
+                    SetContentProtectXml("0");
+
+
+            }
+            if (manager.Rotfoldout && manager.HmdOnlyrot)
+            {
+                if (manager.neckOffset != new Vector3(0, 0.075f, 0.0805f))
+                {
+                    manager.UseCustomNeckPara = true;
+                }
+            }
             EditorUtility.SetDirty(manager);
+            EditorUtility.SetDirty(projectConfig);
 #if !UNITY_5_2
             if (!Application.isPlaying)
             {
@@ -150,7 +217,7 @@ public class Pvr_UnitySDKManagerEditor : Editor
         serializedObject.ApplyModifiedProperties();
     }
 
-    private bool IsSinglePassEnable()
+    public static bool IsSinglePassEnable()
     {
         bool isSinglePass;
 #if UNITY_2017_2
@@ -166,7 +233,7 @@ public class Pvr_UnitySDKManagerEditor : Editor
         return isSinglePass;
     }
 
-    public void SetSinglePass(bool enable)
+    public static void SetSinglePass(bool enable)
     {
         if (enable)
         {
@@ -185,7 +252,7 @@ public class Pvr_UnitySDKManagerEditor : Editor
         }
     }
 
-    private void SetGraphicsAPI()
+    public static void SetGraphicsAPI()
     {
         GraphicsDeviceType[] graphics = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
         List<GraphicsDeviceType> listgraphic = graphics.ToList();
@@ -241,4 +308,16 @@ public class Pvr_UnitySDKManagerEditor : Editor
         }
     }
 
+
+    public int callbackOrder { get { return 0; } }
+
+    public void OnPreprocessBuild(BuildTarget target, string path)
+    {
+        Debug.Log(string.Format("[Build Check] useSinglePass = {0}， isSinglePassEnable = {1}", Pvr_UnitySDKProjectSetting.GetProjectConfig().usesinglepass, IsSinglePassEnable()));
+        if (Pvr_UnitySDKProjectSetting.GetProjectConfig().usesinglepass != IsSinglePassEnable())
+        {
+            Debug.Log(string.Format("[Build Check] SetSinglePass({0})", Pvr_UnitySDKProjectSetting.GetProjectConfig().usesinglepass));
+            SetSinglePass(Pvr_UnitySDKProjectSetting.GetProjectConfig().usesinglepass);
+        }
+    }
 }

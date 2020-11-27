@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CLoadingAsset : ScriptableObject

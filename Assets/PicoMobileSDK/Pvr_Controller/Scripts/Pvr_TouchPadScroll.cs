@@ -1,4 +1,7 @@
-﻿using Pvr_UnitySDKAPI;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using Pvr_UnitySDKAPI;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;

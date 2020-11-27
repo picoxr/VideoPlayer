@@ -1,3 +1,6 @@
+// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
 #if !UNITY_EDITOR && UNITY_ANDROID
 #define ANDROID_DEVICE
 #endif
@@ -26,8 +29,11 @@ public enum RenderEventType
     BoundaryRenderLeft,
     BoundaryRenderRight,
     BothEyeEndFrame,
+    CameraFrameLeft,
+    CameraFrameRight,
+    StartCameraFrame,
+    StopCameraFrame
 }
-
 /// <summary>
 /// Communicates with native plugin functions that run on the rendering thread.
 /// </summary>

@@ -1,4 +1,8 @@
-﻿using Pvr_UnitySDKAPI;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using Pvr_UnitySDKAPI;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,10 +20,13 @@ public class Pvr_UnitySDKEyeManagerEditor : Editor
         firstLevelStyle.fontSize = 12;
         firstLevelStyle.wordWrap = true;
 
+        var guiContent = new GUIContent();
         Pvr_UnitySDKEyeManager sdkEyeManager = (Pvr_UnitySDKEyeManager)target;
 
-        sdkEyeManager.trackEyes = EditorGUILayout.Toggle("Track Eyes", sdkEyeManager.trackEyes);
-        if(sdkEyeManager.trackEyes)
+        guiContent.text = "Eye Tracking";
+        guiContent.tooltip = "Before calling EyeTracking API, enable this option first（For Neo 2 Eye device ONLY). ";
+        sdkEyeManager.EyeTracking = EditorGUILayout.Toggle(guiContent, sdkEyeManager.EyeTracking);
+        if(sdkEyeManager.EyeTracking)
         {
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField("Note:", firstLevelStyle);
@@ -27,39 +34,15 @@ public class Pvr_UnitySDKEyeManagerEditor : Editor
             EditorGUILayout.EndVertical();
         }
 
-        sdkEyeManager.FoveationLevel = (EFoveationLevel)EditorGUILayout.EnumPopup("Foveation Level", sdkEyeManager.FoveationLevel);
-        //eFoveationLevel lastlevel = sdkEyeManager.FoveationLevel;
-        //eFoveationLevel newlevel = (eFoveationLevel)EditorGUILayout.EnumPopup("Foveation Level", sdkEyeManager.FoveationLevel);
-        //if (lastlevel != newlevel)
-        //{
-        //    sdkEyeManager.FoveationLevel = newlevel;
-        //    switch (sdkEyeManager.FoveationLevel)
-        //    {
-        //        case eFoveationLevel.None:
-        //            sdkEyeManager.FoveationGainValue = Vector2.zero;
-        //            sdkEyeManager.FoveationAreaValue = 0.0f;
-        //            sdkEyeManager.FoveationMinimumValue = 0.0f;
-        //            break;
-        //        case eFoveationLevel.Low:
-        //            sdkEyeManager.FoveationGainValue = new Vector2(2.0f, 2.0f);
-        //            sdkEyeManager.FoveationAreaValue = 0.0f;
-        //            sdkEyeManager.FoveationMinimumValue = 0.125f;
-        //            break;
-        //        case eFoveationLevel.Med:
-        //            sdkEyeManager.FoveationGainValue = new Vector2(3.0f, 3.0f);
-        //            sdkEyeManager.FoveationAreaValue = 1.0f;
-        //            sdkEyeManager.FoveationMinimumValue = 0.125f;
-        //            break;
-        //        case eFoveationLevel.High:
-        //            sdkEyeManager.FoveationGainValue = new Vector2(4.0f, 4.0f);
-        //            sdkEyeManager.FoveationAreaValue = 2.0f;
-        //            sdkEyeManager.FoveationMinimumValue = 0.125f;
-        //            break;
-        //    }
-        //}
-        //sdkEyeManager.FoveationGainValue = EditorGUILayout.Vector2Field("Foveation Gain Value", sdkEyeManager.FoveationGainValue);
-        //sdkEyeManager.FoveationAreaValue = EditorGUILayout.FloatField("Foveation Area Value", sdkEyeManager.FoveationAreaValue);
-        //sdkEyeManager.FoveationMinimumValue = EditorGUILayout.FloatField("Foveation Minimum Value", sdkEyeManager.FoveationMinimumValue);
+        guiContent.text = "Foveated Rendering";
+        guiContent.tooltip = "Helps reducing the power usage and slightly increases performance by sacrificing the quality of the peripheral region. In addition, enable both Eye-Tracking and Foveated Rendering will switch to Dynamic Foveated Rendering automatically.";
+        sdkEyeManager.FoveatedRendering = EditorGUILayout.Toggle(guiContent, sdkEyeManager.FoveatedRendering);
+        if (sdkEyeManager.FoveatedRendering)
+        {
+            EditorGUI.indentLevel = 1;
+            sdkEyeManager.FoveationLevel = (EFoveationLevel)EditorGUILayout.EnumPopup("Foveation Level", sdkEyeManager.FoveationLevel);
+            EditorGUI.indentLevel = 0;
+        }
 
         EditorUtility.SetDirty(sdkEyeManager);
         if (GUI.changed)

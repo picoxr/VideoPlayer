@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -30,18 +33,20 @@ public class Pvr_SDKSetting : EditorWindow
     string[] strApplied = { "Applied", "已应用" };
 
     string[] strInformationText = { "Information:", "信息说明" };
-    string[] strInfo1Text = { "1 Rotation tag in Androidmainfest: \n " +
+    string[] strInfo2Text = { "2 Rotation tag in Androidmainfest: \n " +
                                 "  <meta-data android:name=\"pvr.app.type\" android:value=\"vr\" /> \n" +
                                 "  <meta-data android:name=\"pvr.display.orientation\" android:value=\"180\" />",
-                              "1 Rotation tag in Androidmainfest: \n " +
+                              "2 Rotation tag in Androidmainfest: \n " +
                                 "  <meta-data android:name=\"pvr.app.type\" android:value=\"vr\" /> \n" +
                                 "  <meta-data android:name=\"pvr.display.orientation\" android:value=\"180\" />", };
-    string[] strInfo2Text = { "2 Player Setting: \n" +
+    string[] strInfo3Text = { "3 Player Setting: \n" +
                                 "  Default Orientation setting Landscape Left",
-                            "2 Player Setting: \n" +
+                            "3 Player Setting: \n" +
                                 "  Default Orientation setting Landscape Left" };
-    string[] strInfo3Text = { "3 Get the lastest version of SDK:", "3 获取最新版本的SDK:" };
+    string[] strInfo4Text = { "4 Get the lastest version of SDK:", "4 获取最新版本的SDK:" };
     string[] strInfoURL = { "http://us-dev.picovr.com/sdk", "http://dev.picovr.com/sdk" };
+    string[] strInfo1Text = { "1 Support Unity Version: Unity2017.4 - Unity2019.3.6,Unity2019.4.1x,Unity2020.1.8 and above",
+        "1 支持Unity版本：Unity2017.4到Unity 2019.3.6，Unity2019.4.1x，Unity2020.1.8及以上版本" };
 
     string[] strConfigurationText = { "Configuration:", "配置" };
     string[] strConfiguration1Text = { "1 current:             Build Target = {0}\n" +
@@ -134,10 +139,13 @@ public class Pvr_SDKSetting : EditorWindow
         GUILayout.Label(strseparate, styleSlide);
 
         GUILayout.Label(strInformationText[(int)elanguage]);
-        GUILayout.Label(strInfo1Text[(int)elanguage]);
+
+        GUIStyle strInfo1TextStyle = new GUIStyle();
+        strInfo1TextStyle.fontStyle = FontStyle.Bold;
+        GUILayout.Label(strInfo1Text[(int)elanguage],strInfo1TextStyle);
         GUILayout.Label(strInfo2Text[(int)elanguage]);
         GUILayout.Label(strInfo3Text[(int)elanguage]);
-
+        GUILayout.Label(strInfo4Text[(int)elanguage]);
         string strURL = strInfoURL[(int)elanguage];
         GUIStyle style = new GUIStyle();
         style.normal.textColor = new Color(0, 122f / 255f, 204f / 255f);
@@ -145,7 +153,7 @@ public class Pvr_SDKSetting : EditorWindow
         {
             Application.OpenURL(strURL);
         }
-
+        
         GUILayout.Label(strseparate, styleSlide);
 
 

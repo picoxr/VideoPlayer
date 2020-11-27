@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using UnityEngine;
 
 [ExecuteInEditMode]
 public class Pvr_UnitySDKEditor : MonoBehaviour
@@ -64,6 +67,14 @@ public class Pvr_UnitySDKEditor : MonoBehaviour
     {
         ComputeEyesFromProfile();
         InitForEye(ref Pvr_UnitySDKManager.SDK.Eyematerial, ref Pvr_UnitySDKManager.SDK.Middlematerial);
+        if (Pvr_UnitySDKRender.Instance == null)
+        {
+            PLOG.I("pvr_UnitySDKRender init failed");
+        }
+        if (Pvr_UnitySDKSensor.Instance == null)
+        {
+            PLOG.I("pvr_UnitySDKSensor init failed");
+        }
         FovAdjust();
     }
 
@@ -154,7 +165,7 @@ public class Pvr_UnitySDKEditor : MonoBehaviour
 
     private void FovAdjust()
     {
-        Pvr_UnitySDKManager.SDK.EyeVFoV = 2 * Pvr_UnitySDKManager.SDK.pvr_UnitySDKConfig.device.devMaxFov.upper;
+        Pvr_UnitySDKRender.Instance.EyeVFoV = 2 * Pvr_UnitySDKManager.SDK.pvr_UnitySDKConfig.device.devMaxFov.upper;
     }
 
     private Rect RectAdjust(Rect eyeRect)
@@ -197,7 +208,7 @@ public class Pvr_UnitySDKEditor : MonoBehaviour
         var rot = Quaternion.Euler(mouseY, mouseX, mouseZ);
         var neck = (rot * neckOffset - neckOffset.y * Vector3.up) * neckModelScale;
         Matrix4x4 Matrix1 = Matrix4x4.TRS(neck, rot, Vector3.one);
-        Pvr_UnitySDKManager.SDK.HeadPose = new Pvr_UnitySDKPose(Matrix1);
+        Pvr_UnitySDKSensor.Instance.HeadPose = new Pvr_UnitySDKPose(Matrix1);
 
     }
 

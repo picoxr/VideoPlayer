@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -13,8 +16,8 @@ public class Pvr_EyeTrackingEditor : Editor, IPreprocessBuild
 
     public void OnPreprocessBuild(BuildTarget target, string path)
     {
-        bool trackEyes = CheckTrackEyes();
-        if(trackEyes)
+        bool EyeTracking = CheckTrackEyes();
+        if(EyeTracking)
         {
             UpdateAndroidManifestXML("enable_eyetracking", "1");
         }
@@ -26,42 +29,42 @@ public class Pvr_EyeTrackingEditor : Editor, IPreprocessBuild
 
     public static bool CheckTrackEyes()
     {
-        bool trackEyes = false;
+        bool EyeTracking = false;
         bool buildCurrentScene = false;
         if (CheckTrackEyes(ref buildCurrentScene))
         {
-            trackEyes = true;
+            EyeTracking = true;
         }
         if (buildCurrentScene)
         {
             if(CheckTrackEyesInCur())
             {
-                trackEyes = true;
+                EyeTracking = true;
             }
         }
 
-        return trackEyes;
+        return EyeTracking;
     }
 
     public static bool CheckTrackEyesInCur()
     {
-        bool trackEyes = false;
+        bool EyeTracking = false;
 
         Pvr_UnitySDKEyeManager[] array = GameObject.FindObjectsOfType<Pvr_UnitySDKEyeManager>();
         foreach(Pvr_UnitySDKEyeManager manager in array)
         {
-            if(manager.trackEyes)
+            if(manager.EyeTracking)
             {
-                trackEyes = true;
+                EyeTracking = true;
             }
         }
 
-        return trackEyes;
+        return EyeTracking;
     }
 
     public static bool CheckTrackEyes(ref bool buildCurrentScene)
     {
-        bool trackEyes = false;
+        bool EyeTracking = false;
 
         EditorBuildSettingsScene[] scenelist = EditorBuildSettings.scenes;
         string[] allScenes = EditorBuildSettingsScene.GetActiveSceneList(scenelist);
@@ -71,10 +74,10 @@ public class Pvr_EyeTrackingEditor : Editor, IPreprocessBuild
         {
             if(CheckTrackEyesByScene(scenepath))
             {
-                trackEyes = true;
+                EyeTracking = true;
             }
         }
-        return trackEyes;
+        return EyeTracking;
     }
 
     public static bool CheckTrackEyesByScene(string path)
@@ -84,7 +87,7 @@ public class Pvr_EyeTrackingEditor : Editor, IPreprocessBuild
         string strValue;
         while ((line = sr.ReadLine()) != null)
         {
-            if (line.Contains("trackEyes"))
+            if (line.Contains("EyeTracking"))
             {
                 if((strValue = sr.ReadLine()) != null)
                 {

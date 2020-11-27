@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using UnityEngine;
 using System.Collections;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -212,6 +215,7 @@ public class Pvr_InputModule : PointerInputModule
                 break;
         }
     }
+
     protected virtual void ClickOnUp(Pvr_UIPointer pointer, List<RaycastResult> results)
     {
         pointer.pointerEventData.eligibleForClick = pointer.ValidClick(false);
@@ -221,6 +225,7 @@ public class Pvr_InputModule : PointerInputModule
             IsEligibleClick(pointer, results);
         }
     }
+
 
     protected virtual void ClickOnDown(Pvr_UIPointer pointer, List<RaycastResult> results, bool forceClick = false)
     {
@@ -314,6 +319,7 @@ public class Pvr_InputModule : PointerInputModule
                     ExecuteEvents.ExecuteHierarchy(raycast.gameObject, pointer.pointerEventData, ExecuteEvents.dropHandler);
                 }
                 pointer.pointerEventData.pointerDrag = null;
+
             }
         }
         else if (pointer.pointerEventData.dragging)

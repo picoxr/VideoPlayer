@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using System;
 using UnityEngine;
 using System.Collections;
 using Pvr_UnitySDKAPI;
@@ -24,7 +27,6 @@ public class Pvr_ControllerModuleInit : MonoBehaviour
     private GameObject rayLine;
     [SerializeField]
     private GameObject controller;
-    private int controllerDof = -1;
     private bool moduleState = true;
 
     void Awake()

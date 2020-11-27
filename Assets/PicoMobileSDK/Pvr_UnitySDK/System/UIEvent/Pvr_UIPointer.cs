@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using UnityEngine;
 using UnityEngine.EventSystems;
 
 public struct UIPointerEventArgs
@@ -24,10 +27,10 @@ public class Pvr_UIPointer : MonoBehaviour
 
     public ClickMethods clickMethod = ClickMethods.ClickOnButtonUp;
 
-
     [HideInInspector]
     public bool collisionClick = false;
-
+    [HideInInspector]
+    public bool pressToDrag = false;
 
     [HideInInspector]
     public GameObject autoActivatingCanvas = null;
@@ -67,6 +70,7 @@ public class Pvr_UIPointer : MonoBehaviour
     public static bool TouchBtnValue = false;
     public static bool AppBtnValue = false;
     public static bool TriggerBtnValue = false;
+
     public virtual bool PointerActive()
     {
         return true;

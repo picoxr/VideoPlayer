@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using UnityEngine;
 using System.Collections;
 using Pvr_UnitySDKAPI;
 using UnityEngine.UI;
@@ -97,7 +100,7 @@ public class Pvr_ControllerPower : MonoBehaviour
                     else
                     {
                         powerImage.enabled = Vector3.Distance(transform.parent.parent.parent.localPosition,
-                                                 Pvr_UnitySDKManager.SDK.HeadPose.Position) <= 0.35f;
+                                                 Pvr_UnitySDKSensor.Instance.HeadPose.Position) <= 0.35f;
                     }
                     if (powerValue != Controller.UPvr_GetControllerPower(hand))
                     {
@@ -163,7 +166,7 @@ public class Pvr_ControllerPower : MonoBehaviour
                         else
                         {
                             powerImage.enabled = Vector3.Distance(transform.parent.parent.parent.localPosition,
-                                                     Pvr_UnitySDKManager.SDK.HeadPose.Position) <= 0.35f;
+                                                     Pvr_UnitySDKSensor.Instance.HeadPose.Position) <= 0.35f;
                         }
                         if (powerValue != Controller.UPvr_GetControllerPower(0))
                         {

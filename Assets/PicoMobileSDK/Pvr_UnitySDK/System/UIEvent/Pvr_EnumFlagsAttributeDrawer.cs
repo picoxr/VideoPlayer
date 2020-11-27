@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿// Copyright  2015-2020 Pico Technology Co., Ltd. All Rights Reserved.
+
+
+using UnityEngine;
 
 #if UNITY_EDITOR
 [UnityEditor.CustomPropertyDrawer(typeof(Pvr_EnumFlags))]
