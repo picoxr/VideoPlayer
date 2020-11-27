@@ -13,7 +13,7 @@
 
       Demo of VR video player for 3D side-by-side (left-right) video format.
 
-   - Scene:  Assets -> Scenes -> 360 _ 3D-over-under
+   - Scene: Assets -> Scenes -> 360 _ 3D-over-under
 
       Demo of VR video player for 360_3D over-under (top-buttom) video format.
 
