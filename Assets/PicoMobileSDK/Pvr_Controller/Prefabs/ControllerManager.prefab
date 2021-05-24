@@ -511,10 +511,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   goblin: {fileID: 1521205502849808, guid: 97d0c360e5e953e418040d87a3ebd1cc, type: 2}
-  neo: {fileID: 1140772726308538, guid: cc46481dccf3c54469bd85557de7649d, type: 2}
   g2: {fileID: 1839923237025650, guid: 58fe80cb01c5cd14ba5000044db09b11, type: 2}
   neo2L: {fileID: 1500665661939418, guid: b15b6f34591c3254fa1677f3dfd48bc4, type: 2}
   neo2R: {fileID: 1810187172651210, guid: a538a6a8e4ced814e84ac4c0ea35fbfb, type: 2}
+  neo3L: {fileID: 1777931825368482, guid: de295a8537484de468212d40845f6502, type: 2}
+  neo3R: {fileID: 1371818110539984, guid: 0e66b1bd33892d94493ff0f72d8d3d33, type: 2}
   standardMat: {fileID: 2100000, guid: 3c2d4982e1429ab4d8802c5363b6472e, type: 2}
   unlitMat: {fileID: 2100000, guid: 1f39dae0e78c7c24480cf7313d3f6b3f, type: 2}
   loadModelSuccess: 0
@@ -579,10 +580,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   goblin: {fileID: 1521205502849808, guid: 97d0c360e5e953e418040d87a3ebd1cc, type: 2}
-  neo: {fileID: 1140772726308538, guid: cc46481dccf3c54469bd85557de7649d, type: 2}
   g2: {fileID: 1839923237025650, guid: 58fe80cb01c5cd14ba5000044db09b11, type: 2}
   neo2L: {fileID: 1500665661939418, guid: b15b6f34591c3254fa1677f3dfd48bc4, type: 2}
   neo2R: {fileID: 1810187172651210, guid: a538a6a8e4ced814e84ac4c0ea35fbfb, type: 2}
+  neo3L: {fileID: 1777931825368482, guid: de295a8537484de468212d40845f6502, type: 2}
+  neo3R: {fileID: 1371818110539984, guid: 0e66b1bd33892d94493ff0f72d8d3d33, type: 2}
   standardMat: {fileID: 2100000, guid: 3c2d4982e1429ab4d8802c5363b6472e, type: 2}
   unlitMat: {fileID: 2100000, guid: 1f39dae0e78c7c24480cf7313d3f6b3f, type: 2}
   loadModelSuccess: 0
@@ -599,6 +601,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clickMethod: 0
   collisionClick: 0
+  pressToDrag: 0
   autoActivatingCanvas: {fileID: 0}
   hoveringElement: {fileID: 0}
   hoverDurationTimer: 0
@@ -684,6 +687,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clickMethod: 0
   collisionClick: 0
+  pressToDrag: 0
   autoActivatingCanvas: {fileID: 0}
   hoveringElement: {fileID: 0}
   hoverDurationTimer: 0

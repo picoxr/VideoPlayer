@@ -534,6 +534,58 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: videoPlayer
+      value: 
+      objectReference: {fileID: 788462932}
+    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: videoClip
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: play
+      value: 
+      objectReference: {fileID: 1507701606}
+    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: playicon
+      value: 
+      objectReference: {fileID: 21300000, guid: ce35a5cd6aece94479315b0960ce70d1,
+        type: 3}
+    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: pauseicon
+      value: 
+      objectReference: {fileID: 21300000, guid: c8b3c8f682b2b1744be8927aca5453ff,
+        type: 3}
+    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: fornt
+      value: 
+      objectReference: {fileID: 1507701605}
+    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: back
+      value: 
+      objectReference: {fileID: 1507701604}
+    - target: {fileID: 114551653732248792, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1507701603}
+    - target: {fileID: 114551653732248792, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: QuitScence
+      objectReference: {fileID: 0}
+    - target: {fileID: 223676668106265332, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: m_Camera
+      value: 
+      objectReference: {fileID: 1604442710}
     - target: {fileID: 224224202790351238, guid: 579851de9b82e664ea8c05acc4599fd1,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -624,58 +676,6 @@ PrefabInstance:
       propertyPath: m_Pivot.y
       value: 0.5
       objectReference: {fileID: 0}
-    - target: {fileID: 223676668106265332, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: m_Camera
-      value: 
-      objectReference: {fileID: 1604442710}
-    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: videoPlayer
-      value: 
-      objectReference: {fileID: 788462932}
-    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: videoClip
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: play
-      value: 
-      objectReference: {fileID: 1507701606}
-    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: playicon
-      value: 
-      objectReference: {fileID: 21300000, guid: ce35a5cd6aece94479315b0960ce70d1,
-        type: 3}
-    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: pauseicon
-      value: 
-      objectReference: {fileID: 21300000, guid: c8b3c8f682b2b1744be8927aca5453ff,
-        type: 3}
-    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: fornt
-      value: 
-      objectReference: {fileID: 1507701605}
-    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: back
-      value: 
-      objectReference: {fileID: 1507701604}
-    - target: {fileID: 114551653732248792, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 1507701603}
-    - target: {fileID: 114551653732248792, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: QuitScence
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 579851de9b82e664ea8c05acc4599fd1, type: 3}
 --- !u!1 &1507701602 stripped
@@ -739,11 +739,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 5952791241686782781, guid: 1d2db34010588564eb449e19d566a223,
-        type: 3}
-      propertyPath: m_Name
-      value: Pvr_UnitySDK
-      objectReference: {fileID: 0}
     - target: {fileID: 1429449341, guid: 1d2db34010588564eb449e19d566a223, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -788,10 +783,39 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4266256262525130, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.31730464
+      objectReference: {fileID: 0}
+    - target: {fileID: 4266256262525130, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.94832367
+      objectReference: {fileID: 0}
+    - target: {fileID: 4266256262525130, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 37
+      objectReference: {fileID: 0}
+    - target: {fileID: 4920987026523678, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.31730464
+      objectReference: {fileID: 0}
+    - target: {fileID: 4920987026523678, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.94832367
+      objectReference: {fileID: 0}
+    - target: {fileID: 4920987026523678, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 37
+      objectReference: {fileID: 0}
     - target: {fileID: 3102012065259012783, guid: 1d2db34010588564eb449e19d566a223,
         type: 3}
       propertyPath: m_CullingMask.m_Bits
       value: 23
+      objectReference: {fileID: 0}
+    - target: {fileID: 5952791241686782781, guid: 1d2db34010588564eb449e19d566a223,
+        type: 3}
+      propertyPath: m_Name
+      value: Pvr_UnitySDK
       objectReference: {fileID: 0}
     - target: {fileID: 7796467262959045045, guid: 1d2db34010588564eb449e19d566a223,
         type: 3}

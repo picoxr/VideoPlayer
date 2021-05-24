@@ -410,13 +410,9 @@ public class Pvr_UnitySDKEye : MonoBehaviour
 
     private void SetFFRParameter()
     {
-        if (!Pvr_UnitySDKEyeManager.Instance.FoveatedRendering)
-        {
-            return;
-        }
 
         Vector3 eyePoint = Vector3.zero;
-        if (Pvr_UnitySDKManager.SDK.isEnterVRMode && Pvr_UnitySDKEyeManager.Instance.supportEyeTracking)
+        if (Pvr_UnitySDKManager.SDK.isEnterVRMode && Pvr_UnitySDKEyeManager.supportEyeTracking && Pvr_UnitySDKEyeManager.Instance.EyeTracking)
         {
             eyePoint = Pvr_UnitySDKAPI.System.UPvr_getEyeTrackingPos();
         }

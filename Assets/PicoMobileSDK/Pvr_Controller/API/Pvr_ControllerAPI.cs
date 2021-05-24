@@ -19,6 +19,9 @@ namespace Pvr_UnitySDKAPI
         public bool PressedUp;
         public bool LongPressed;
         public bool Click;
+        public bool Touch;
+        public bool TouchDown;
+        public bool TouchUp;
         public PvrControllerKey()
         {
             State = false;
@@ -26,6 +29,9 @@ namespace Pvr_UnitySDKAPI
             PressedUp = false;
             LongPressed = false;
             Click = false;
+            Touch = false;
+            TouchDown = false;
+            TouchUp = false;
         }
     }
 
@@ -43,8 +49,10 @@ namespace Pvr_UnitySDKAPI
         public PvrControllerKey B;
         public PvrControllerKey Left;
         public PvrControllerKey Right;
+        public PvrControllerKey Thumbrest;
         public Vector2 TouchPadPosition;
         public int TriggerNum;
+        public int GripValue;
         public Quaternion Rotation;
         public Vector3 Position;
         public int Battery;
@@ -67,11 +75,13 @@ namespace Pvr_UnitySDKAPI
             Y = new PvrControllerKey();
             Left = new PvrControllerKey();
             Right = new PvrControllerKey();
+            Thumbrest = new PvrControllerKey();
             TouchPadPosition = new Vector2();
             Rotation = new Quaternion();
             Position = new Vector3();
             Battery = 0;
             TriggerNum = 0;
+            GripValue = 0;
             ConnectState = ControllerState.Error;
             SwipeDirection = SwipeDirection.No;
             TouchPadClick = TouchPadClick.No;
@@ -102,7 +112,8 @@ namespace Pvr_UnitySDKAPI
         X = 9,
         Y = 10,
         Left = 11,
-        Right = 12
+        Right = 12,
+        Thumbrest = 13
     }
 
     /// <summary>
@@ -157,6 +168,44 @@ namespace Pvr_UnitySDKAPI
             return new Vector2(0, 0);
         }
 
+        public static float UPvr_GetAxis1D(int hand, Pvr_KeyCode key)
+        {
+            switch (hand)
+            {
+                case 0:
+                    {
+                        switch (key)
+                        {
+                            case Pvr_KeyCode.TRIGGER:
+                                {
+                                    return Pvr_ControllerManager.controllerlink.Controller0.TriggerNum / 255.0f;
+                                }
+                            case Pvr_KeyCode.Left:
+                                {
+                                    return Pvr_ControllerManager.controllerlink.Controller0.GripValue / 255.0f;
+                                }
+                        }
+                        return 0.0f;
+                    }
+                case 1:
+                    {
+                        switch (key)
+                        {
+                            case Pvr_KeyCode.TRIGGER:
+                                {
+                                    return Pvr_ControllerManager.controllerlink.Controller1.TriggerNum / 255.0f;
+                                }
+                            case Pvr_KeyCode.Right:
+                                {
+                                    return Pvr_ControllerManager.controllerlink.Controller1.GripValue / 255.0f;
+                                }
+                        }
+                        return 0.0f;
+                    }
+            }
+            return 0.0f;
+        }
+
         /// <summary>
         /// convert coordinate system
         /// </summary>
@@ -170,8 +219,8 @@ namespace Pvr_UnitySDKAPI
                     {
                         if (Pvr_ControllerManager.controllerlink.Controller0.TouchPadPosition != Vector2.zero)
                         {
-                            var postion = new Vector2(Pvr_ControllerManager.controllerlink.Controller0.TouchPadPosition.y / 128.0f - 1,
-                                Pvr_ControllerManager.controllerlink.Controller0.TouchPadPosition.x / 128.0f - 1);
+                            var postion = new Vector2(Pvr_ControllerManager.controllerlink.Controller0.TouchPadPosition.x / 128.0f - 1,
+                                Pvr_ControllerManager.controllerlink.Controller0.TouchPadPosition.y / 128.0f - 1);
                             return postion;
                         }
 
@@ -182,8 +231,8 @@ namespace Pvr_UnitySDKAPI
                     {
                         if (Pvr_ControllerManager.controllerlink.Controller1.TouchPadPosition != Vector2.zero)
                         {
-                            var postion = new Vector2(Pvr_ControllerManager.controllerlink.Controller1.TouchPadPosition.y / 128.0f - 1,
-                                Pvr_ControllerManager.controllerlink.Controller1.TouchPadPosition.x / 128.0f - 1);
+                            var postion = new Vector2(Pvr_ControllerManager.controllerlink.Controller1.TouchPadPosition.x / 128.0f - 1,
+                                Pvr_ControllerManager.controllerlink.Controller1.TouchPadPosition.y / 128.0f - 1);
                             return postion;
                         }
 
@@ -256,7 +305,7 @@ namespace Pvr_UnitySDKAPI
         }
 
         /// <summary>
-        /// Get the power of the controller, neo power is 1-10, goblin/goblin2 power is 1-4.
+        /// Get the power of the controller, 0-4
         /// </summary>
         /// <param name="hand">0,1</param>
         public static int UPvr_GetControllerPower(int hand)
@@ -490,6 +539,139 @@ namespace Pvr_UnitySDKAPI
             return false;
         }
 
+        public static bool UPvr_GetTouch(int hand, Pvr_KeyCode key)
+        {
+            if (hand == 0)
+            {
+                switch (key)
+                {
+                    case Pvr_KeyCode.TOUCHPAD:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Touch.Touch;
+                    case Pvr_KeyCode.TRIGGER:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Trigger.Touch;
+                    case Pvr_KeyCode.X:
+                        return Pvr_ControllerManager.controllerlink.Controller0.X.Touch;
+                    case Pvr_KeyCode.Y:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Y.Touch;
+                    case Pvr_KeyCode.Thumbrest:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Thumbrest.Touch;
+                    default:
+                        return false;
+                }
+            }
+            if (hand == 1)
+            {
+                switch (key)
+                {
+                    case Pvr_KeyCode.TOUCHPAD:
+                        return Pvr_ControllerManager.controllerlink.Controller1.Touch.Touch;
+                    case Pvr_KeyCode.TRIGGER:
+                        return Pvr_ControllerManager.controllerlink.Controller1.Trigger.Touch;
+                    case Pvr_KeyCode.A:
+                        return Pvr_ControllerManager.controllerlink.Controller1.A.Touch;
+                    case Pvr_KeyCode.B:
+                        return Pvr_ControllerManager.controllerlink.Controller1.B.Touch;
+                    case Pvr_KeyCode.Thumbrest:
+                        return Pvr_ControllerManager.controllerlink.Controller1.Thumbrest.Touch;
+                    default:
+                        return false;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Get the pressed state of the touch
+        /// </summary>
+        /// <param name="hand">0,1</param>
+        /// <param name="key">Pvr_KeyCode</param>
+        public static bool UPvr_GetTouchDown(int hand, Pvr_KeyCode key)
+        {
+            if (hand == 0)
+            {
+                switch (key)
+                {
+                    case Pvr_KeyCode.TOUCHPAD:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Touch.TouchDown;
+                    case Pvr_KeyCode.TRIGGER:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Trigger.TouchDown;
+                    case Pvr_KeyCode.X:
+                        return Pvr_ControllerManager.controllerlink.Controller0.X.TouchDown;
+                    case Pvr_KeyCode.Y:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Y.TouchDown;
+                    case Pvr_KeyCode.Thumbrest:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Thumbrest.TouchDown;
+                    default:
+                        return false;
+                }
+            }
+            if (hand == 1)
+            {
+                switch (key)
+                {
+                    case Pvr_KeyCode.TOUCHPAD:
+                        return Pvr_ControllerManager.controllerlink.Controller1.Touch.TouchDown;
+                    case Pvr_KeyCode.TRIGGER:
+                        return Pvr_ControllerManager.controllerlink.Controller1.Trigger.TouchDown;
+                    case Pvr_KeyCode.A:
+                        return Pvr_ControllerManager.controllerlink.Controller1.A.TouchDown;
+                    case Pvr_KeyCode.B:
+                        return Pvr_ControllerManager.controllerlink.Controller1.B.TouchDown;
+                    case Pvr_KeyCode.Thumbrest:
+                        return Pvr_ControllerManager.controllerlink.Controller1.Thumbrest.TouchDown;
+                    default:
+                        return false;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the lift state of the touch.
+        /// </summary>
+        /// <param name="hand">0,1</param>
+        /// <param name="key">Pvr_KeyCode</param>
+        public static bool UPvr_GetTouchUp(int hand, Pvr_KeyCode key)
+        {
+            if (hand == 0)
+            {
+                switch (key)
+                {
+                    case Pvr_KeyCode.TOUCHPAD:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Touch.TouchUp;
+                    case Pvr_KeyCode.TRIGGER:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Trigger.TouchUp;
+                    case Pvr_KeyCode.X:
+                        return Pvr_ControllerManager.controllerlink.Controller0.X.TouchUp;
+                    case Pvr_KeyCode.Y:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Y.TouchUp;
+                    case Pvr_KeyCode.Thumbrest:
+                        return Pvr_ControllerManager.controllerlink.Controller0.Thumbrest.TouchUp;
+                    default:
+                        return false;
+                }
+            }
+            if (hand == 1)
+            {
+                switch (key)
+                {
+                    case Pvr_KeyCode.TOUCHPAD:
+                        return Pvr_ControllerManager.controllerlink.Controller1.Touch.TouchUp;
+                    case Pvr_KeyCode.TRIGGER:
+                        return Pvr_ControllerManager.controllerlink.Controller1.Trigger.TouchUp;
+                    case Pvr_KeyCode.A:
+                        return Pvr_ControllerManager.controllerlink.Controller1.A.TouchUp;
+                    case Pvr_KeyCode.B:
+                        return Pvr_ControllerManager.controllerlink.Controller1.B.TouchUp;
+                    case Pvr_KeyCode.Thumbrest:
+                        return Pvr_ControllerManager.controllerlink.Controller1.Thumbrest.TouchUp;
+                    default:
+                        return false;
+                }
+            }
+            return false;
+        }
+
         /// <summary>
         /// Gets the click state of the Key.
         /// </summary>
@@ -665,7 +847,7 @@ namespace Pvr_UnitySDKAPI
         {
             var trackingmode = Pvr_ControllerManager.controllerlink.trackingmode;
             var systemproc = Pvr_ControllerManager.controllerlink.systemProp;
-            if (trackingmode == 0 || trackingmode == 1 || (trackingmode == 3 || trackingmode == 5) && (systemproc == 1 || systemproc == 3))
+            if (trackingmode == 0 || trackingmode == 1 || (trackingmode == 3 || trackingmode == 5 || trackingmode == 6) && (systemproc == 1 || systemproc == 3))
             {
                 return 1;
             }
@@ -683,7 +865,7 @@ namespace Pvr_UnitySDKAPI
         /// <summary>
         ///Gets the controller type of the current connection.
         /// </summary>
-        /// <returns>0: no connection 1：goblin1 2:Neo 3:goblin2 4:Neo2</returns>
+        /// <returns>0: no connection 1：goblin1 2:Neo 3:goblin2 4:Neo2 5:Neo3</returns>
         public static int UPvr_GetDeviceType()
         {
             return Pvr_ControllerManager.controllerlink.controllerType;

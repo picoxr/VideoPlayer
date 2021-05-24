@@ -188,8 +188,8 @@ namespace BoundarySystem_Ext
                 return false;
             }
 
-            // Second:Init Boundary System
-            int ret = Pvr_SafeAreaAlgoAPI.Pvr_GSAInit();
+            // Second:Init Boundary System,using 300cm * 300cm
+            int ret = Pvr_SafeAreaAlgoAPI.Pvr_GSAInit(300,300);
             if (ret != 0)
             {
                 Debug.LogError("BoundarySystem init failed!");

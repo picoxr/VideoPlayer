@@ -43,9 +43,6 @@ public class Pvr_UnitySDKEyeOverlay : MonoBehaviour, IComparable<Pvr_UnitySDKEye
     // Will be called after externalAndroidSurfaceObject get created.
     public ExternalAndroidSurfaceObjectCreated externalAndroidSurfaceObjectCreated = null;
 
-    public OverlayTexFilterMode magTexFilterMode = OverlayTexFilterMode.NotCare;
-    public OverlayTexFilterMode minTexFilterMode = OverlayTexFilterMode.NotCare;
-
 
     public int CompareTo(Pvr_UnitySDKEyeOverlay other)
     {

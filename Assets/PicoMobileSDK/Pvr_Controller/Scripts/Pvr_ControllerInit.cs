@@ -21,13 +21,15 @@ public class Pvr_ControllerInit : MonoBehaviour
     [SerializeField]
     private GameObject goblin;
     [SerializeField]
-    private GameObject neo;
-    [SerializeField]
     private GameObject g2;
     [SerializeField]
     private GameObject neo2L;
     [SerializeField]
     private GameObject neo2R;
+    [SerializeField]
+    private GameObject neo3L;
+    [SerializeField]
+    private GameObject neo3R;
     [SerializeField]
     private Material standardMat;
     [SerializeField]
@@ -44,9 +46,9 @@ public class Pvr_ControllerInit : MonoBehaviour
     private string prePath = "";
     private string modelFilePath = "/system/media/PvrRes/controller/";
     private const string goblinTexbasePath = "Controller/controller1/controller1";
-    private const string neoTexbasePath = "Controller/controller2/controller2";
     private const string g2TexbasePath = "Controller/controller3/controller3";
     private const string neo2TexbasePath = "Controller/controller4/controller4";
+    private const string neo3TexbasePath = "Controller/controller5/controller5";
 
     void Awake()
     {
@@ -147,9 +149,12 @@ public class Pvr_ControllerInit : MonoBehaviour
             JsonData jdata = JsonMapper.ToObject(json);
             if (controllerType >= 0)
             {
-                curControllerData = jdata[controllerType - 1];
-                modelFilePath = (string)curControllerData["base_path"];
-                modelName = (string)curControllerData["model_name"] + "_sys";
+                if (jdata.Count >= controllerType )
+                {
+                    curControllerData = jdata[controllerType - 1];
+                    modelFilePath = (string)curControllerData["base_path"];
+                    modelName = (string)curControllerData["model_name"] + "_sys";
+                }
             }
         }
         else
@@ -300,13 +305,6 @@ public class Pvr_ControllerInit : MonoBehaviour
                 LoadTexture(goblinComp, goblinTexbasePath, true);
                 loadModelSuccess = true;
                 break;
-            case 2:
-                var neoGo = Instantiate(neo, transform, false);
-                var neoComp = neoGo.AddComponent<Pvr_ControllerVisual>();
-                neoComp.currentDevice = ControllerDevice.Neo;
-                LoadTexture(neoComp, neoTexbasePath, true);
-                loadModelSuccess = true;
-                break;
             case 3:
                 var g2Go = Instantiate(g2, transform, false);
                 var g2Comp = g2Go.AddComponent<Pvr_ControllerVisual>();
@@ -319,6 +317,13 @@ public class Pvr_ControllerInit : MonoBehaviour
                 var neo2Comp = neo2Go.AddComponent<Pvr_ControllerVisual>();
                 neo2Comp.currentDevice = ControllerDevice.Neo2;
                 LoadTexture(neo2Comp,neo2TexbasePath,true);
+                loadModelSuccess = true;
+                break;
+            case 5:
+                var neo3Go = Instantiate(Variety == ControllerVariety.Controller0 ? neo3L : neo3R, transform, false);
+                var neo3Comp = neo3Go.AddComponent<Pvr_ControllerVisual>();
+                neo3Comp.currentDevice = ControllerDevice.Neo3;
+                LoadTexture(neo3Comp, neo3TexbasePath, true);
                 loadModelSuccess = true;
                 break;
             default:
@@ -358,11 +363,6 @@ public class Pvr_ControllerInit : MonoBehaviour
                         controllerVisual.currentDevice = ControllerDevice.Goblin;
                     }
                     break;
-                case 2:
-                    {
-                        controllerVisual.currentDevice = ControllerDevice.Neo;
-                    }
-                    break;
                 case 3:
                     {
                         controllerVisual.currentDevice = ControllerDevice.G2;
@@ -371,6 +371,11 @@ public class Pvr_ControllerInit : MonoBehaviour
                 case 4:
                     {
                         controllerVisual.currentDevice = ControllerDevice.Neo2;
+                    }
+                    break;
+                case 5:
+                    {
+                        controllerVisual.currentDevice = ControllerDevice.Neo3;
                     }
                     break;
                 default:

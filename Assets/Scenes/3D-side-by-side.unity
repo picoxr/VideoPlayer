@@ -416,37 +416,6 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 5
       objectReference: {fileID: 0}
-    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
-        type: 3}
-      propertyPath: m_DataSource
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
-        type: 3}
-      propertyPath: m_Url
-      value: file://storage/emulated/0/Download/1211.mp4
-      objectReference: {fileID: 0}
-    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
-        type: 3}
-      propertyPath: m_VideoClip
-      value: 
-      objectReference: {fileID: 32900000, guid: 51573feb0a86f974c89837cdaeb5b57f,
-        type: 3}
-    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
-        type: 3}
-      propertyPath: m_WaitForFirstFrame
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
-        type: 3}
-      propertyPath: m_EnabledAudioTracks.Array.data[0]
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
-        type: 3}
-      propertyPath: m_TargetAudioSources.Array.data[0]
-      value: 
-      objectReference: {fileID: 817962034}
     - target: {fileID: 4770055755421338, guid: cccc111f5e9e78a4789348ab5b9fe6f9, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -491,6 +460,61 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_TargetAudioSources.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_DirectAudioVolumes.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_EnabledAudioTracks.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_DirectAudioMutes.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_DataSource
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_Url
+      value: file://storage/emulated/0/Download/1211.mp4
+      objectReference: {fileID: 0}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_VideoClip
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_WaitForFirstFrame
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_EnabledAudioTracks.Array.data[0]
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_TargetAudioSources.Array.data[0]
+      value: 
+      objectReference: {fileID: 817962034}
+    - target: {fileID: 328937353935892966, guid: cccc111f5e9e78a4789348ab5b9fe6f9,
+        type: 3}
+      propertyPath: m_ControlledAudioTrackCount
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cccc111f5e9e78a4789348ab5b9fe6f9, type: 3}
 --- !u!1001 &1538478602
@@ -504,6 +528,26 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: videoPlayer
+      value: 
+      objectReference: {fileID: 817962033}
+    - target: {fileID: 114551653732248792, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1538478604}
+    - target: {fileID: 114551653732248792, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: QuitScence
+      objectReference: {fileID: 0}
+    - target: {fileID: 223676668106265332, guid: 579851de9b82e664ea8c05acc4599fd1,
+        type: 3}
+      propertyPath: m_Camera
+      value: 
+      objectReference: {fileID: 1615462225}
     - target: {fileID: 224224202790351238, guid: 579851de9b82e664ea8c05acc4599fd1,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -594,26 +638,6 @@ PrefabInstance:
       propertyPath: m_Pivot.y
       value: 0.5
       objectReference: {fileID: 0}
-    - target: {fileID: 223676668106265332, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: m_Camera
-      value: 
-      objectReference: {fileID: 1615462225}
-    - target: {fileID: 114404424136732194, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: videoPlayer
-      value: 
-      objectReference: {fileID: 817962033}
-    - target: {fileID: 114551653732248792, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 1538478604}
-    - target: {fileID: 114551653732248792, guid: 579851de9b82e664ea8c05acc4599fd1,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: QuitScence
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 579851de9b82e664ea8c05acc4599fd1, type: 3}
 --- !u!1 &1538478603 stripped
@@ -641,11 +665,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 5952791241686782781, guid: 1d2db34010588564eb449e19d566a223,
-        type: 3}
-      propertyPath: m_Name
-      value: Pvr_UnitySDK
-      objectReference: {fileID: 0}
     - target: {fileID: 1429449341, guid: 1d2db34010588564eb449e19d566a223, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -690,10 +709,39 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4266256262525130, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.31730464
+      objectReference: {fileID: 0}
+    - target: {fileID: 4266256262525130, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.94832367
+      objectReference: {fileID: 0}
+    - target: {fileID: 4266256262525130, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 37
+      objectReference: {fileID: 0}
+    - target: {fileID: 4526732251791726, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.31730464
+      objectReference: {fileID: 0}
+    - target: {fileID: 4526732251791726, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.94832367
+      objectReference: {fileID: 0}
+    - target: {fileID: 4526732251791726, guid: 1d2db34010588564eb449e19d566a223, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 37
+      objectReference: {fileID: 0}
     - target: {fileID: 3102012065259012783, guid: 1d2db34010588564eb449e19d566a223,
         type: 3}
       propertyPath: m_CullingMask.m_Bits
       value: 23
+      objectReference: {fileID: 0}
+    - target: {fileID: 5952791241686782781, guid: 1d2db34010588564eb449e19d566a223,
+        type: 3}
+      propertyPath: m_Name
+      value: Pvr_UnitySDK
       objectReference: {fileID: 0}
     - target: {fileID: 7796467262959045045, guid: 1d2db34010588564eb449e19d566a223,
         type: 3}

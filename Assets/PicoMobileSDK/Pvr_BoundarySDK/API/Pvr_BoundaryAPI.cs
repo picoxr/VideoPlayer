@@ -207,7 +207,7 @@ namespace BoundarySystem_Ext
         /// </summary>
         /// <returns>0: OK</returns>
         [DllImport(LibFileName, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int GSAInit();
+        private static extern int GSAInit(int width,int height);
         /// <summary>
         /// ShutDown
         /// </summary>
@@ -304,11 +304,11 @@ namespace BoundarySystem_Ext
         #endregion
 
         #region Public DLL API Interface Wrap
-        public static int Pvr_GSAInit()
+        public static int Pvr_GSAInit(int width,int height)
         {
             int ret = -1;
 #if UNITY_ANDROID && !UNITY_EDITOR
-            ret = GSAInit();
+            ret = GSAInit(width,height);
 #endif
             return ret;
         }

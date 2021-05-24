@@ -1,0 +1,4 @@
+sceneSetups:
+- path: Assets/Scenes/360_player.unity
+  isLoaded: 1
+  isActive: 1

@@ -62,12 +62,6 @@ public class Pvr_UnitySDKEyeManager : MonoBehaviour
     private readonly int WaitSplashScreenFrames = 3;
     private int frameNum = 0;
 
-    // boundary limit 30FPS flag
-    private bool isFrameRateLimitForBoundary;
-    private int lastBoundaryState = 0;
-    private int recordTargetFrameRate;
-    private int limitTargetFrameRate = 30;
-
     [SerializeField]
     [HideInInspector]
     private bool foveatedRendering;
@@ -86,13 +80,10 @@ public class Pvr_UnitySDKEyeManager : MonoBehaviour
                 foveatedRendering = value;
                 if (Application.isPlaying)
                 {
-                    if (foveatedRendering)
+                    Pvr_UnitySDKAPI.Render.UPvr_EnableFoveation(true);
+                    if (!foveatedRendering)
                     {
-                        Pvr_UnitySDKAPI.Render.UPvr_EnableFoveation(true);
-                    }
-                    else
-                    {
-                        Pvr_UnitySDKAPI.Render.UPvr_EnableFoveation(false);
+                        Pvr_UnitySDKAPI.Render.SetFoveatedRenderingLevel((EFoveationLevel)(-1));
                     }
                 }
             }
@@ -199,16 +190,16 @@ public class Pvr_UnitySDKEyeManager : MonoBehaviour
         //screen fade
         CreateFadeMesh();
         SetCurrentAlpha(0);
-
+       
         // FFR
+        Pvr_UnitySDKAPI.Render.UPvr_EnableFoveation(true);
         if (foveatedRendering)
         {
-            Pvr_UnitySDKAPI.Render.UPvr_EnableFoveation(true);
             Pvr_UnitySDKAPI.Render.SetFoveatedRenderingLevel(this.foveationLevel);
         }
         else
         {
-            Pvr_UnitySDKAPI.Render.UPvr_EnableFoveation(false);
+            Pvr_UnitySDKAPI.Render.SetFoveatedRenderingLevel((EFoveationLevel)(-1));
         }
 
         Pvr_UnitySDKManager.eventEnterVRMode += SetEyeTrackingMode;
@@ -269,10 +260,6 @@ public class Pvr_UnitySDKEyeManager : MonoBehaviour
 
     void Start()
     {
-        // record
-        this.isFrameRateLimitForBoundary = BoundarySystem.UPvr_GetFrameRateLimit();
-        this.recordTargetFrameRate = Application.targetFrameRate;
-
 #if !UNITY_EDITOR && UNITY_ANDROID
         SetCamerasEnableByStereoRendering();
         SetupMonoCamera();
@@ -288,35 +275,6 @@ public class Pvr_UnitySDKEyeManager : MonoBehaviour
 #if UNITY_EDITOR
         SetCameraEnableEditor();
 #endif
-        // boundary limit FPS
-        if (isFrameRateLimitForBoundary)
-        {
-            int currentBoundaryState = BoundarySystem.UPvr_GetSeeThroughState();
-
-            if (currentBoundaryState != this.lastBoundaryState)
-            {
-                if (currentBoundaryState == 2 || currentBoundaryState == 1) // limit framerate
-                {
-                    if (Application.targetFrameRate != this.limitTargetFrameRate)
-                    {                 
-                        // record
-                        this.recordTargetFrameRate = Application.targetFrameRate;
-                        // limit FPS
-                        Application.targetFrameRate = this.limitTargetFrameRate;
-                    }
-
-                }
-                else // recover
-                {
-                    Application.targetFrameRate = this.recordTargetFrameRate;
-                }
-
-                this.lastBoundaryState = currentBoundaryState;
-            }
-        }
-
-
-
         if (Pvr_UnitySDKRender.Instance.StereoRenderPath == StereoRenderingPathPico.SinglePass)
         {
             for (int i = 0; i < Eyes.Length; i++)
@@ -503,7 +461,6 @@ public class Pvr_UnitySDKEyeManager : MonoBehaviour
                                 this.CreateExternalSurface(compositeLayer, overlayLayerDepth);
                             }
 
-                            layerFlags = layerFlags | (((int)compositeLayer.minTexFilterMode << 4) & 0xf0) | (((int)compositeLayer.magTexFilterMode << 8) & 0xf00); // Set texture mag and min filter mode
                             Pvr_UnitySDKAPI.Render.UPvr_SetOverlayModelViewMatrix((int)compositeLayer.overlayType, (int)compositeLayer.overlayShape, compositeLayer.layerTextureIds[0], (int)Pvr_UnitySDKAPI.Eye.LeftEye, overlayLayerDepth, isHeadLocked, layerFlags, compositeLayer.MVMatrixs[0],
                             compositeLayer.ModelScales[0], compositeLayer.ModelRotations[0], compositeLayer.ModelTranslations[0], compositeLayer.CameraRotations[0], compositeLayer.CameraTranslations[0], compositeLayer.GetLayerColorScale(), compositeLayer.GetLayerColorOffset());
 
@@ -521,7 +478,6 @@ public class Pvr_UnitySDKEyeManager : MonoBehaviour
                                 this.CreateExternalSurface(compositeLayer, underlayLayerDepth);
                             }
 
-                            layerFlags = layerFlags | (((int)compositeLayer.minTexFilterMode << 4) & 0xf0) | (((int)compositeLayer.magTexFilterMode << 8) & 0xf00); // Set texture mag and min filter mode
                             Pvr_UnitySDKAPI.Render.UPvr_SetOverlayModelViewMatrix((int)compositeLayer.overlayType, (int)compositeLayer.overlayShape, compositeLayer.layerTextureIds[0], (int)Pvr_UnitySDKAPI.Eye.LeftEye, underlayLayerDepth, false, layerFlags, compositeLayer.MVMatrixs[0],
                             compositeLayer.ModelScales[0], compositeLayer.ModelRotations[0], compositeLayer.ModelTranslations[0], compositeLayer.CameraRotations[0], compositeLayer.CameraTranslations[0], compositeLayer.GetLayerColorScale(), compositeLayer.GetLayerColorOffset());
 
@@ -589,7 +545,7 @@ public class Pvr_UnitySDKEyeManager : MonoBehaviour
     public Vector3 eyePoint;
     private EyeTrackingData eyePoseData;
     [HideInInspector]
-    public bool supportEyeTracking = false;
+    public static bool supportEyeTracking = false;
 
     public bool SetEyeTrackingMode()
     {
@@ -800,4 +756,5 @@ public class Pvr_UnitySDKEyeManager : MonoBehaviour
         return false;
     }
     #endregion
+
 }

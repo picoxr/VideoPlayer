@@ -243,6 +243,91 @@ namespace Pvr_UnitySDKAPI
 #endif
         }
 
+        public static void UPvr_ScreenOn()
+        {
+#if ANDROID_DEVICE
+            System.UPvr_CallMethod(tobHelper, "pbsScreenOn");
+#endif
+        }
+
+        public static void UPvr_ScreenOff()
+        {
+#if ANDROID_DEVICE
+            System.UPvr_CallMethod(tobHelper, "pbsScreenOff");
+#endif
+        }
+
+        public static void UPvr_AcquireWakeLock()
+        {
+#if ANDROID_DEVICE
+            System.UPvr_CallMethod(tobHelper, "pbsAcquireWakeLock");
+#endif
+        }
+
+        public static void UPvr_ReleaseWakeLock()
+        {
+#if ANDROID_DEVICE
+            System.UPvr_CallMethod(tobHelper, "pbsReleaseWakeLock");
+#endif
+        }
+
+        public static void UPvr_EnableEnterKey()
+        {
+#if ANDROID_DEVICE
+            System.UPvr_CallMethod(tobHelper, "pbsEnableEnterKey");
+#endif
+        }
+
+        public static void UPvr_DisableEnterKey()
+        {
+#if ANDROID_DEVICE
+            System.UPvr_CallMethod(tobHelper, "pbsDisableEnterKey");
+#endif
+        }
+
+        public static void UPvr_EnableVolumeKey()
+        {
+#if ANDROID_DEVICE
+            System.UPvr_CallMethod(tobHelper, "pbsEnableVolumeKey");
+#endif
+        }
+
+        public static void UPvr_DisableVolumeKey()
+        {
+#if ANDROID_DEVICE
+            System.UPvr_CallMethod(tobHelper, "pbsDisableVolumeKey");
+#endif
+        }
+
+        public static void UPvr_EnableBackKey()
+        {
+#if ANDROID_DEVICE
+            System.UPvr_CallMethod(tobHelper, "pbsEnableBackKey");
+#endif
+        }
+
+        public static void UPvr_DisableBackKey()
+        {
+#if ANDROID_DEVICE
+            System.UPvr_CallMethod(tobHelper, "pbsDisableBackKey");
+#endif
+        }
+
+        public static void UPvr_WriteConfigFileToDataLocal(string path, string content, Action<bool> callback)
+        {
+#if ANDROID_DEVICE
+            if (callback != null) BoolCallback = callback;
+            System.UPvr_CallMethod(tobHelper, "pbsWriteConfigFileToDataLocal", path, content, null);
+#endif
+        }
+
+        public static void UPvr_ResetAllKeyToDefault(Action<bool> callback)
+        {
+#if ANDROID_DEVICE
+            if (callback != null) BoolCallback = callback;
+            System.UPvr_CallMethod(tobHelper, "pbsResetAllKeyToDefault", null);
+#endif
+        }
         #endregion
     }
 }

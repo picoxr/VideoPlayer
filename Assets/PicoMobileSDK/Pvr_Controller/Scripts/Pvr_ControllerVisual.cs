@@ -15,6 +15,7 @@ namespace Pvr_UnitySDKAPI
         Neo,
         G2,
         Neo2,
+        Neo3,
         NewController
     }
 }

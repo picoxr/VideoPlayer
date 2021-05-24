@@ -32,12 +32,6 @@ public class Pvr_UnitySDKEyeOverlayEditor : Editor
             guiContent.text = "External Surface";
             guiContent.tooltip = "On Android, retrieve an Android Surface object to render to (e.g., video playback).";
             overlayTarget.isExternalAndroidSurface = EditorGUILayout.Toggle(guiContent, overlayTarget.isExternalAndroidSurface);
-            guiContent.text = "Mag Filter Mode";
-            guiContent.tooltip = "The texture magnification filter mode of this overlay.";
-            overlayTarget.magTexFilterMode = (Pvr_UnitySDKEyeOverlay.OverlayTexFilterMode)EditorGUILayout.EnumPopup(guiContent, overlayTarget.magTexFilterMode);
-            guiContent.text = "Min Filter Mode";
-            guiContent.tooltip = "The texture minification filter mode of this overlay.";
-            overlayTarget.minTexFilterMode = (Pvr_UnitySDKEyeOverlay.OverlayTexFilterMode)EditorGUILayout.EnumPopup(guiContent, overlayTarget.minTexFilterMode);
 
             var labelControlRect = EditorGUILayout.GetControlRect();
             EditorGUI.LabelField(new Rect(labelControlRect.x, labelControlRect.y, labelControlRect.width / 2, labelControlRect.height), new GUIContent("Left Texture", "Texture used for the left eye"));
